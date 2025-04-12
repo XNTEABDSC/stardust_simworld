@@ -1,0 +1,20 @@
+[package]
+name = "simworld"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+
+bevy = { version = "0.15.0", features = ["dynamic_linking"] }
+fixed = "1.28.0"
+cordic = "0.1.5"
+bevy_ecs = "0.15.0"
+wacky_bag = {path="../../repos/wacky_bag"}
+rand = "0.8.5"
+statistic_physics = {path="../../repos/statistic_physics"}
+log = { version = "*", features = ["max_level_debug", "release_max_level_warn"] }
+# ambassador = "0.4.1"
+
+
+[target.x86_64-pc-windows-msvc]
+linker = "rust-lld.exe"
