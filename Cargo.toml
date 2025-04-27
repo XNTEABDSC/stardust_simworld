@@ -14,6 +14,7 @@ rand = "0.8.5"
 statistic_physics = {path="../../repos/statistic_physics"}
 physics_basic = {path="../../repos/physics_basic"}
 log = { version = "*", features = ["max_level_debug", "release_max_level_warn"] }
+frunk = "0.4.3"
 # ambassador = "0.4.1"
 
 

@@ -14,6 +14,6 @@ pub fn calculate_states(mut query:Query<
     ,(With<DeterminingComponent<Mass>>,With<DeterminingComponent<Momentum>>,With<DeterminingComponent<Energy>>)>){
     query.iter_mut().for_each(
         |(mass,momentum,energy,mut vel,mut kinetic,mut internal,mut vel_var_sq,mut vel_var,mut vel_var_sq_1dir,mut vel_var_1dir)|{
-            calculate_matters_state(&mass.0,&momentum.0,&energy.0,&mut vel.0,&mut kinetic.0,&mut internal.0,&mut vel_var_sq.0,&mut vel_var.0,&mut vel_var_sq_1dir.0,&mut vel_var_1dir.0)
+            calculate_matters_state((&mass.0,&momentum.0,&energy.0,&mut vel.0,&mut kinetic.0,&mut internal.0,&mut vel_var_sq.0,&mut vel_var.0,&mut vel_var_sq_1dir.0,&mut vel_var_1dir.0))
     });
 }
