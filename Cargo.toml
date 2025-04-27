@@ -12,6 +12,7 @@ bevy_ecs = "0.15.0"
 wacky_bag = {path="../../repos/wacky_bag"}
 rand = "0.8.5"
 statistic_physics = {path="../../repos/statistic_physics"}
+physics_basic = {path="../../repos/physics_basic"}
 log = { version = "*", features = ["max_level_debug", "release_max_level_warn"] }
 # ambassador = "0.4.1"
 

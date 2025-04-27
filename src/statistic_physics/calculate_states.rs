@@ -1,23 +1,19 @@
 use bevy_ecs::{query::With, system::Query};
-use statistic_physics::{constants::NUMINV2, num::Num};
+use statistic_physics::{constants::NUMINV2, formulas::calculate_matters_state, num::Num};
 
-use crate::{components::determining_components::DeterminingComponent, physics::mass::Mass, transform::tramsform::Vel};
+use crate::{components::{determining_components::DeterminingComponent, stat_component::StatComponent}, transform::tramsform::Vel};
 
-use super::matters::{Energy, Internal, Kinetic, Momentum, VelVar, VelVar1Dir, VelVarSq, VelVarSq1Dir};
+use physics_basic::stats::*;
+
+use statistic_physics::stats::*;
 
 
 
 pub fn calculate_states(mut query:Query<
-    (&Mass,&Momentum,&Energy,&mut Vel,&mut Kinetic,&mut Internal,&mut VelVarSq,&mut VelVar,&mut VelVarSq1Dir,&mut VelVar1Dir)
+    (&StatComponent< Mass>,&StatComponent<Momentum>,&StatComponent<Energy>,&mut StatComponent<Vel>,&mut StatComponent<Kinetic>,&mut StatComponent<Internal>,&mut StatComponent<VelVarSq>,&mut StatComponent<VelVar>,&mut StatComponent<VelVarSq1Dir>,&mut StatComponent<VelVar1Dir>)
     ,(With<DeterminingComponent<Mass>>,With<DeterminingComponent<Momentum>>,With<DeterminingComponent<Energy>>)>){
     query.iter_mut().for_each(
         |(mass,momentum,energy,mut vel,mut kinetic,mut internal,mut vel_var_sq,mut vel_var,mut vel_var_sq_1dir,mut vel_var_1dir)|{
-            vel.0=momentum.0/mass.0;
-            kinetic.0=(momentum.0*momentum.0/mass.0) *NUMINV2;
-            internal.0=energy.0-kinetic.0;
-            vel_var_sq.0=2*internal.0/mass.0;
-            vel_var.0=Num::sqrt(vel_var_sq.0);
-            vel_var_sq_1dir.0=vel_var_sq.0*NUMINV2;
-            vel_var_1dir.0=vel_var.0*Num::FRAC_1_SQRT_2;
+            calculate_matters_state(&mass.0,&momentum.0,&energy.0,&mut vel.0,&mut kinetic.0,&mut internal.0,&mut vel_var_sq.0,&mut vel_var.0,&mut vel_var_sq_1dir.0,&mut vel_var_1dir.0)
     });
 }
