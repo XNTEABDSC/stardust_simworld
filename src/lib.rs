@@ -1,3 +1,5 @@
+use bevy_ecs::world::World;
+
 pub mod components;
 pub mod systems;
 pub mod bundles;
@@ -8,6 +10,8 @@ pub mod grid;
 pub mod grid_gas;
 
 pub fn add(left: u64, right: u64) -> u64 {
+    let aew=World::new();
+
     left + right
 }
 
