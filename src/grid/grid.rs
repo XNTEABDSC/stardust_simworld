@@ -2,8 +2,11 @@ use bevy_ecs::{component::Component, entity::{Entity, EntityLocation}, system::R
 use statistic_physics::num::Num;
 use wacky_bag::structures::grid::Grid2D;
 
+
 #[derive(Component)]
 pub struct OverlapGrid(pub Vec<((usize,usize),Num)>);
+
+
 
 #[derive(Component)]
 pub struct GridCell(pub (usize,usize));
@@ -21,3 +24,4 @@ impl<const XSIZE:usize,const YSIZE:usize> GridResource<XSIZE,YSIZE> {
     pub const fn grid_entities(&self)->&Grid2D<[[Entity;XSIZE];YSIZE]>{&self.grid_entities}
     pub const fn grid_entities_mut(&mut self)->&mut Grid2D<[[Entity;XSIZE];YSIZE]>{&mut self.grid_entities}
 }
+

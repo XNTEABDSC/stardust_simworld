@@ -1,6 +1,6 @@
 use bevy_ecs::bundle::Bundle;
 
-use crate::components::{change::ChangeComponent, determining_components::DeterminingComponent, stat_component::StatComponent};
+use crate::components::{change_component::ChangeComponent, determining_components::DeterminingComponent, stat_component::StatComponent};
 
 use physics_basic::stats::*;
 
