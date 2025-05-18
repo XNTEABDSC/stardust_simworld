@@ -6,7 +6,7 @@ use crate::components::{change_component::ChangeComponent, determining_component
 pub fn determining_components_apply_changes<T>(mut query:Query<(&mut T,&mut ChangeComponent<T>),With<DeterminingComponent<T>>>)
     where T:Component+std::ops::AddAssign<T>+Default
 {
-    for (mut value,mut delta) in &mut query {
+    (&mut query).par_iter_mut().for_each(|(mut value,mut delta)|{
         *value+=delta.get_and_reset();
-    }
+    });
 }
