@@ -1,4 +1,4 @@
-use bevy_ecs::{component::Component, entity::{Entity, EntityLocation}, system::Resource, world::{EntityMut, EntityRef, EntityWorldMut}};
+use bevy_ecs::{component::Component, entity::Entity, system::Resource};
 use statistic_physics::num::Num;
 use wacky_bag::structures::grid::Grid2D;
 

@@ -1,5 +1,5 @@
 use bevy_ecs::{query::With, system::Query};
-use statistic_physics::{constants::NUMINV2, formulas::calculate_matters_state, num::Num};
+use statistic_physics::formulas::calculate_matters_state;
 
 use crate::{components::{determining_components::DeterminingComponent, stat_component::StatComponent}, transform::tramsform::Vel};
 
