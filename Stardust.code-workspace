@@ -1,0 +1,23 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../repos"
+		},
+		{
+			"path": "../../repos/wacky_bag"
+		},
+		{
+			"path": "../../repos/physics_basic"
+		},
+		{
+			"path": "../../repos/statistic_physics"
+		},
+		{
+			"path": "../../repos/wacky_bag_fixed"
+		}
+	],
+	"settings": {}
+}
