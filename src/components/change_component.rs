@@ -21,3 +21,4 @@ impl<T> ChangeComponent<T>{
         mem::replace(&mut b,Default::default())
     }
 }
+
