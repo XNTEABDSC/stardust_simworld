@@ -9,9 +9,9 @@ use statistic_physics::stats::*;
 
 
 #[derive(Bundle,Default)]
-pub struct MattersBundle{
+pub struct MattersBundle<const DIM:usize>{
     pub mass:StatComponent<Mass>,
-    pub momentum:StatComponent<Momentum>,
+    pub momentum:StatComponent<Momentum<DIM>>,
     pub energy:StatComponent<Energy>,
     pub kinetic:StatComponent<Kinetic>,
     pub internal:StatComponent<Internal>,
@@ -21,8 +21,8 @@ pub struct MattersBundle{
     pub vel_var1_dir:StatComponent<VelVar1Dir>,
     pub mass_determining:DeterminingComponent<Mass>,
     pub energy_determining:DeterminingComponent<Energy>,
-    pub momentum_determining:DeterminingComponent<Momentum>,
+    pub momentum_determining:DeterminingComponent<Momentum<DIM>>,
     pub mass_change:ChangeComponent<Mass>,
-    pub momentum_change:ChangeComponent<Momentum>,
+    pub momentum_change:ChangeComponent<Momentum<DIM>>,
     pub energy_change:ChangeComponent<Energy>
 }

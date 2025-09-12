@@ -1,4 +1,5 @@
 use bevy_ecs::{query::With, system::Query};
+use frunk::hlist;
 use statistic_physics::formulas::calculate_matters_state;
 
 use crate::{components::{determining_components::DeterminingComponent, stat_component::StatComponent}, transform::tramsform::Vel};
@@ -9,11 +10,11 @@ use statistic_physics::stats::*;
 
 
 
-pub fn calculate_states(mut query:Query<
-    (&StatComponent< Mass>,&StatComponent<Momentum>,&StatComponent<Energy>,&mut StatComponent<Vel>,&mut StatComponent<Kinetic>,&mut StatComponent<Internal>,&mut StatComponent<VelVarSq>,&mut StatComponent<VelVar>,&mut StatComponent<VelVarSq1Dir>,&mut StatComponent<VelVar1Dir>)
-    ,(With<DeterminingComponent<Mass>>,With<DeterminingComponent<Momentum>>,With<DeterminingComponent<Energy>>)>){
+pub fn calculate_states<const DIM:usize>(mut query:Query<
+    (&StatComponent< Mass>,&StatComponent<Momentum<DIM>>,&StatComponent<Energy>,&mut StatComponent<Vel<DIM>>,&mut StatComponent<Kinetic>,&mut StatComponent<Internal>,&mut StatComponent<VelVarSq>,&mut StatComponent<VelVar>,&mut StatComponent<VelVarSq1Dir>,&mut StatComponent<VelVar1Dir>)
+    ,(With<DeterminingComponent<Mass>>,With<DeterminingComponent<Momentum<DIM>>>,With<DeterminingComponent<Energy>>)>){
     query.par_iter_mut().for_each(
         |(mass,momentum,energy,mut vel,mut kinetic,mut internal,mut vel_var_sq,mut vel_var,mut vel_var_sq_1dir,mut vel_var_1dir)|{
-            calculate_matters_state((&mass.0,&momentum.0,&energy.0,&mut vel.0,&mut kinetic.0,&mut internal.0,&mut vel_var_sq.0,&mut vel_var.0,&mut vel_var_sq_1dir.0,&mut vel_var_1dir.0))
+            calculate_matters_state(hlist!(&mass.0,&momentum.0,&energy.0,&mut vel.0,&mut kinetic.0,&mut internal.0,&mut vel_var_sq.0,&mut vel_var.0,&mut vel_var_sq_1dir.0,&mut vel_var_1dir.0))
     });
 }

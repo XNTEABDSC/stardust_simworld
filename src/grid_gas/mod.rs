@@ -1,3 +1,4 @@
 pub mod grid_gas_bundle;
-pub mod grid_gas_edge_type;
-pub mod grid_gas_spread;
+pub mod edge_type;
+pub mod spread;
+pub mod resource;

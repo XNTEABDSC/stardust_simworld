@@ -1,12 +1,16 @@
 use std::array;
 
 use bevy::app::App;
-use wacky_bag::structures::grid::Grid2D;
+use bevy_ecs::{bundle::Bundle, entity::Entity};
+use wacky_bag::structures::{grid::Grid2D, just::Just, n_dim_array::NDimArray, n_dim_index::{NDimIndex, NDimIndexer}};
 
 use super::grid::{GridCell, GridResource};
 
 
-pub fn grid_plugin<const XSIZE:usize,const YSIZE:usize>(func:impl Fn((usize,usize)))->impl FnOnce(&mut App) {
+pub fn grid_plugin<const DIM:usize,Func,B>(n_dim_indexer:NDimIndexer<DIM>,func:Func )->impl FnOnce(&mut App) 
+    where Func:Fn(NDimIndex<DIM>)->B,B:Bundle
+
+{
     return move |app|{
         /*
         let grid_entities=Grid2DVec::<Entity>::new(size, |pos|{
@@ -15,14 +19,24 @@ pub fn grid_plugin<const XSIZE:usize,const YSIZE:usize>(func:impl Fn((usize,usiz
                 GridCell(pos)
             )).id()
         }); */
-        let grid_entities=Grid2D::new( array::from_fn(|y|{array::from_fn(|x|{
-            let pos=(x,y);
+
+        let grid_entities=NDimArray::from_fn(Just(n_dim_indexer), |pos|{
             app.world_mut().spawn((
                 func(pos),
                 GridCell(pos)
             )).id()
-        })}));
-        let resource=GridResource::<XSIZE,YSIZE> { grid_entities };
+        });
+
+        
+
+        // let grid_entities=Grid2D::new( array::from_fn(|y|{array::from_fn(|x|{
+        //     let pos=(x,y);
+        //     app.world_mut().spawn((
+        //         func(pos),
+        //         GridCell(pos)
+        //     )).id()
+        // })}));
+        let resource=GridResource::<DIM>{ grid_entities };
         app.insert_resource(resource);
         //let dawdawd:usize=Num::ONE.into();
     };
