@@ -16,22 +16,20 @@ where
     }
 }
 
+
 pub struct ComputeTaskPoolScopeCreator;
 
-impl ScopeCreator for ComputeTaskPoolScopeCreator {
+impl<Output,ScopeFnOutput:'static+Send> ScopeCreator<Output,ScopeFnOutput> for ComputeTaskPoolScopeCreator {
+    type Output <'env,F> = Vec< F::ScopeFnOutput>
+        where F: ScopeUser<'env,Output =Output,ScopeFnOutput =ScopeFnOutput>;
 
-    type Output<'env, F>
-        = Vec<<F as ScopeUser<'env>>::ScopeFnOutput>
-    where
-        F: wacky_bag::traits::scope::ScopeUser<'env> + 'env;
-
-    fn scope<'env, F>(&mut self, f: F) -> Self::Output<'env, F>
-    where
-        F: wacky_bag::traits::scope::ScopeUser<'env> + 'env,
-    {
+    fn scope<'env,F>(&mut self,f:F ) -> Self::Output<'env,F>
+        where F: ScopeUser<'env,Output =Output,ScopeFnOutput =ScopeFnOutput>,
+             {
         bevy::tasks::ComputeTaskPool::get().scope(move |s:&BevyScope<'_,'env, _ >|{
             let ntscope=ComputeTaskPoolScope(s);
-            let extended_ntscope: &'env ComputeTaskPoolScope<'_, 'env, <F as ScopeUser<'env>>::ScopeFnOutput> =
+            // bbevy::tasks::TaskPool::scope did same
+            let extended_ntscope: &'env ComputeTaskPoolScope<'_, 'env, F::ScopeFnOutput> =
                 unsafe { std::mem::transmute(&ntscope) };
             f.use_scope(extended_ntscope);
         })
