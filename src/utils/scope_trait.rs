@@ -1,9 +1,9 @@
 use bevy::tasks::Scope as BevyScope;
-use wacky_bag::traits::scope::{Scope, ScopeCreator, ScopeUser};
+use wacky_bag::traits::scope::{ThreadScope, ThreadScopeCreator, ThreadScopeUser};
 
 pub struct ComputeTaskPoolScope<'scope, 'env: 'scope, T>(&'scope BevyScope<'scope, 'env, T>);
 
-impl<'scope, 'env: 'scope, ScopeFuncOutput> wacky_bag::traits::scope::Scope<'scope, ScopeFuncOutput>
+impl<'scope, 'env: 'scope, ScopeFuncOutput> wacky_bag::traits::scope::ThreadScope<'scope, ScopeFuncOutput>
     for ComputeTaskPoolScope<'scope, 'env, ScopeFuncOutput>
 where
     ScopeFuncOutput: Send,
@@ -19,12 +19,12 @@ where
 
 pub struct ComputeTaskPoolScopeCreator;
 
-impl<Output,ScopeFnOutput:'static+Send> ScopeCreator<Output,ScopeFnOutput> for ComputeTaskPoolScopeCreator {
+impl<Output,ScopeFnOutput:'static+Send> ThreadScopeCreator<Output,ScopeFnOutput> for ComputeTaskPoolScopeCreator {
     type Output <'env,F> = Vec< F::ScopeFnOutput>
-        where F: ScopeUser<'env,Output =Output,ScopeFnOutput =ScopeFnOutput>;
+        where F: ThreadScopeUser<'env,Output =Output,ScopeFnOutput =ScopeFnOutput>;
 
     fn scope<'env,F>(&mut self,f:F ) -> Self::Output<'env,F>
-        where F: ScopeUser<'env,Output =Output,ScopeFnOutput =ScopeFnOutput>,
+        where F: ThreadScopeUser<'env,Output =Output,ScopeFnOutput =ScopeFnOutput>,
              {
         bevy::tasks::ComputeTaskPool::get().scope(move |s:&BevyScope<'_,'env, _ >|{
             let ntscope=ComputeTaskPoolScope(s);
