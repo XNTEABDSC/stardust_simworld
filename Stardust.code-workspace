@@ -14,6 +14,9 @@
 		},
 		{
 			"path": "../../repos/wacky_bag_fixed"
+		},
+		{
+			"path": "../../repos/wacky_bag_bevy"
 		}
 	],
 	"settings": {}
