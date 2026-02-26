@@ -1,7 +1,7 @@
 
 
-pub mod components;
-pub mod systems;
+// pub mod components;
+// pub mod systems;
 pub mod bundles;
 pub mod transform;
 pub mod statistic_physics;

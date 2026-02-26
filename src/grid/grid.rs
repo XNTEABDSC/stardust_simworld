@@ -1,14 +1,15 @@
 use std::sync::Arc;
 
-use bevy_ecs::{component::Component, entity::Entity, system::Resource};
+use bevy::ecs::{component::Component, entity::Entity, resource::Resource};
 use derive_more::Deref;
 use statistic_physics::num::Num;
-use wacky_bag::structures::{grid::Grid2D, just::Just, n_dim_array::NDimArray, n_dim_index::{NDimIndex, NDimIndexer}};
+use wacky_bag::structures::n_dim_array::{n_dim_chunk_array::NDimChunkArray, n_dim_indexer::NDimIndexer};
 
 
 
 
-pub type GridResource<const DIM:usize,T>=NDimArray<Arc<NDimIndexer<DIM>>,DIM,T,Vec<T>>;
+
+pub type GridResource<const DIM:usize,T>=NDimChunkArray<DIM,T>;
 
 #[derive(Resource,Deref)]
 pub struct GridIndexer<const DIM:usize>(pub Arc<NDimIndexer<DIM>>);

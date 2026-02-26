@@ -1,4 +1,5 @@
-use bevy_ecs::system::Resource;
+
+use bevy::ecs::resource::Resource;
 use physics_basic::num::Num;
 
 

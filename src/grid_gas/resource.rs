@@ -1,18 +1,25 @@
-use bevy_ecs::system::Resource;
-use frunk::HList;
-use wacky_bag::structures::n_dim_array::NDimArray;
+use std::{ops::Add, str};
+
+use bevy::ecs::resource::Resource;
+use frunk::{Func, HList, Poly, hlist::{self, HMappable, HZippable},};
+use statistic_physics::matters::{MattersBasic, MattersFull};
+use wacky_bag_bevy::{stat_component::{change::Change, stat::Stat}, utils::stat_for_hlist::{MapToChange, MapToStat}};
+
 
 use crate::grid::grid::GridResource;
 
-use statistic_physics::matters::Matters;
+// use statistic_physics::matters::Matters;
 
-pub type GridGasStat<const DIM:usize>=HList!(Matters<DIM>);
+// pub type GridGasStat<const DIM:usize>=HList!(Matters<DIM>);
 
-
-#[derive(Resource)]
-pub struct GridGasStatResource<const DIM:usize>(pub GridResource<DIM,GridGasStat<DIM>>);
-
-pub type GridGasDelta<const DIM:usize>=HList!(Matters<DIM>);
 
 #[derive(Resource)]
-pub struct GridGasDeltaResource<const DIM:usize>(pub GridResource<DIM,GridGasDelta<DIM>>);
+pub struct GridGasResource<const DIM:usize>(pub GridResource<DIM,
+	
+	<
+		<MattersFull::<DIM> as HMappable<Poly<MapToStat>>>::Output
+		as Add<
+		<MattersBasic::<DIM> as HMappable<Poly<MapToChange>>>::Output
+	>
+	>::Output
+>);

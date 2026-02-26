@@ -1,28 +1,31 @@
-use bevy_ecs::bundle::Bundle;
 
-use crate::components::{change_component::ChangeComponent, determining_components::DeterminingComponent, stat_component::StatComponent};
+use bevy::ecs::bundle::Bundle;
+
+// use crate::components::{change_component::ChangeComponent, determining_components::DeterminingComponent, stat_component::StatComponent};
+
 
 use physics_basic::stats::*;
 
 use statistic_physics::stats::*;
+use wacky_bag_bevy::stat_component::{determining::Determining, stat::Stat, change::Change};
 
 
 
 #[derive(Bundle,Default)]
 pub struct MattersBundle<const DIM:usize>{
-    pub mass:StatComponent<Mass>,
-    pub momentum:StatComponent<Momentum<DIM>>,
-    pub energy:StatComponent<Energy>,
-    pub kinetic:StatComponent<Kinetic>,
-    pub internal:StatComponent<Internal>,
-    pub vel_var_sq:StatComponent<VelVarSq>,
-    pub vel_var:StatComponent<VelVar>,
-    pub vel_var_sq1_dir:StatComponent<VelVarSq1Dir>,
-    pub vel_var1_dir:StatComponent<VelVar1Dir>,
-    pub mass_determining:DeterminingComponent<Mass>,
-    pub energy_determining:DeterminingComponent<Energy>,
-    pub momentum_determining:DeterminingComponent<Momentum<DIM>>,
-    pub mass_change:ChangeComponent<Mass>,
-    pub momentum_change:ChangeComponent<Momentum<DIM>>,
-    pub energy_change:ChangeComponent<Energy>
+    pub mass:Stat<Mass>,
+    pub momentum:Stat<Momentum<DIM>>,
+    pub energy:Stat<Energy>,
+    pub kinetic:Stat<Kinetic>,
+    pub internal:Stat<Internal>,
+    pub vel_var_sq:Stat<VelVarSq>,
+    pub vel_var:Stat<VelVar>,
+    pub vel_var_sq1_dir:Stat<VelVarSq1Dir>,
+    pub vel_var1_dir:Stat<VelVar1Dir>,
+    pub mass_determining:Determining<Mass>,
+    pub energy_determining:Determining<Energy>,
+    pub momentum_determining:Determining<Momentum<DIM>>,
+    pub mass_change:Change<Mass>,
+    pub momentum_change:Change<Momentum<DIM>>,
+    pub energy_change:Change<Energy>
 }

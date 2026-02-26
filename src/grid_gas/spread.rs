@@ -1,30 +1,53 @@
-use bevy_ecs::{system::{Query, Res, ResMut}, world::{EntityMut, World}};
-use frunk::HList;
-use wacky_bag::structures::n_dim_array::NDimArray;
+use std::array;
 
-use crate::{components::stat_component::StatComponent, grid::grid::{GridIndexer, GridResource}, grid_gas::resource::{GridGasDeltaResource, GridGasStatResource}, resources::simulate_speed::SimulateSpeed, transform::tramsform::Vel};
+use bevy::ecs::system::Res;
+use frunk::Poly;
+use wacky_bag::{structures::n_dim_array::t_n_dim_array::TNDimArrayParallelIterPair, utils::{output_func::HMappableFrom, select_zip::HSelectZippable}};
+use wacky_bag_bevy::utils::{stat_for_hlist::{HAddChange, MapFromStatRef, SelectChangeRef}, thread_scope::ComputeTaskPoolScopeCreater};
+
+
+use crate::{grid_gas::resource::{GridGasResource}, resources::simulate_speed::SimulateSpeed};
 
 use wacky_bag_fixed::vec_fix::VecFix;
-use super::edge_type::GridGasEdgeWall;
 
-use physics_basic::{num::Num, stats::*};
-use statistic_physics::stats::*;
+use physics_basic::num::Num;
+use statistic_physics::formulas;
 
+pub fn grid_gas_spread_edge_ignore<const DIM:usize>(grid_gas:Res<GridGasResource<DIM>>,simulate_speed:Res<SimulateSpeed>) {
+	let spf=simulate_speed.second_per_frame;
+	let volume:Num=Num::from_num(1);
+	let edge_len:Num=Num::from_num(1);
 
-pub fn grid_gas_spread_edge_wall<const DIM:usize>(grid_indexer:GridIndexer<DIM>,grid_gas_stat:Res<GridGasStatResource<DIM>>,grid_gas_delta:ResMut<GridGasDeltaResource<DIM>>,_res_gas_grid_edge_wall:Res<GridGasEdgeWall>,simulate_speed:Res<SimulateSpeed>){
-    let volume=Num::ONE;
-    let edge_len=Num::ONE;
-    let spf=simulate_speed.second_per_frame;
-    for grid_idx in grid_indexer.iter(){
-        let stats=grid_gas_stat.0.get_with_neiborhoods_loop(grid_idx).unwrap();
-        //let deltas=grid_gas_delta.get_mut_with_
-        // if let Some(things)=things_may{
-        //     let cur_gas=things.cur;
-        //     //let cur_delta=things
-        // }
-    }
+	grid_gas.0.iter_pair_parallel(&|a,b,i|{
+		let edge_dir_vec: VecFix<DIM>=array::from_fn(|z|if z==i {Num::from_num(1)} else {Num::from_num(0)}).into();
+		let r=formulas::gas_cell_spread_to_side(
+			HMappableFrom::output_map(
+				a
+				.to_ref()
+				.sculpt().0,
+				Poly(MapFromStatRef)
+			)
+			, volume, edge_dir_vec, edge_len, spf);
 
+		r.select_zip(Poly(SelectChangeRef::default()), b.to_ref().sculpt().0)
+		.map(Poly(HAddChange));
+	}, &ComputeTaskPoolScopeCreater);
 }
+
+// pub fn grid_gas_spread_edge_wall<const DIM:usize>(grid_indexer:GridIndexer<DIM>,grid_gas_stat:Res<GridGasStatResource<DIM>>,grid_gas_delta:ResMut<GridGasDeltaResource<DIM>>,_res_gas_grid_edge_wall:Res<GridGasEdgeWall>,simulate_speed:Res<SimulateSpeed>){
+//     let volume=Num::ONE;
+//     let edge_len=Num::ONE;
+//     let spf=simulate_speed.second_per_frame;
+//     // for grid_idx in grid_indexer.iter(){
+//     //     let stats=grid_gas_stat.0.get_with_neiborhoods_loop(grid_idx).unwrap();
+//     //     //let deltas=grid_gas_delta.get_mut_with_
+//     //     // if let Some(things)=things_may{
+//     //     //     let cur_gas=things.cur;
+//     //     //     //let cur_delta=things
+//     //     // }
+//     // }
+
+// }
 
 // pub fn grid_gas_spread_edge_wall_<const DIM:usize>(wld:&mut World,res_grid:Res<GridResource<DIM>>,_res_gas_grid_edge_wall:Res<GridGasEdgeWall>,simulate_speed:Res<SimulateSpeed>){
     
