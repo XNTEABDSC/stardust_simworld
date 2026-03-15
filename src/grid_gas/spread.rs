@@ -1,25 +1,30 @@
-use std::array;
 
 use bevy::ecs::system::Res;
-use frunk::Poly;
-use wacky_bag::{structures::n_dim_array::t_n_dim_array::TNDimArrayParallelIterPair, utils::{output_func::HMappableFrom, select_zip::HSelectZippable}};
-use wacky_bag_bevy::utils::{stat_for_hlist::{HAddChange, MapFromStatRef, SelectChangeRef}, thread_scope::ComputeTaskPoolScopeCreater};
+use frunk::{Poly, hlist};
+use wacky_bag::{structures::n_dim_array::{dim_dir::DimDir, t_n_dim_array::{TNDimArrayForEachEdgeParallel, TNDimArrayIterPairParallel}}, utils::{h_list_helpers::MapNeg, output_func::HMappableFrom, select_zip::HSelectZippable}};
+use wacky_bag_bevy::utils::{stat_for_hlist::{HAddChange, HChangeTransfer, MapFromStatRef, Select2ChangeRef, SelectChangeRef}, thread_scope::ComputeTaskPoolScopeCreater};
 
 
-use crate::{grid_gas::resource::{GridGasResource}, resources::simulate_speed::SimulateSpeed};
+use crate::{grid::grid::GridData, grid_gas::{edge_type::GridGasEdgeWall, resource::GridGasResource}, resources::simulate_speed::SimulateSpeed};
 
 use wacky_bag_fixed::vec_fix::VecFix;
 
-use physics_basic::num::Num;
+use physics_basic::{num::Num, stats::Momentum};
 use statistic_physics::formulas;
 
-pub fn grid_gas_spread_edge_ignore<const DIM:usize>(grid_gas:Res<GridGasResource<DIM>>,simulate_speed:Res<SimulateSpeed>) {
-	let spf=simulate_speed.second_per_frame;
-	let volume:Num=Num::from_num(1);
-	let edge_len:Num=Num::from_num(1);
+/*
+e^x -> 2^x = e^(x*log2)
+e^log2=2
+*/
 
-	grid_gas.0.iter_pair_parallel(&|a,b,i|{
-		let edge_dir_vec: VecFix<DIM>=array::from_fn(|z|if z==i {Num::from_num(1)} else {Num::from_num(0)}).into();
+
+pub fn grid_gas_spread<const DIM:usize>(grid_gas:Res<GridGasResource<DIM>>,simulate_speed:Res<SimulateSpeed>,grid_size:Res<GridData<DIM>>) {
+	let spf=simulate_speed.second_per_frame;
+	let edge_len:Num=grid_size.grid_edge_len;
+	let volume:Num=cordic::exp(edge_len/Num::LOG2_E);
+
+	grid_gas.0.iter_pair_2_side_parallel(&|a,b,dim_dir|{
+		let edge_dir_vec: VecFix<DIM>=dim_dir.to_dir_vec().map(|a|Num::from_num(a)).into();
 		let r=formulas::gas_cell_spread_to_side(
 			HMappableFrom::output_map(
 				a
@@ -29,9 +34,105 @@ pub fn grid_gas_spread_edge_ignore<const DIM:usize>(grid_gas:Res<GridGasResource
 			)
 			, volume, edge_dir_vec, edge_len, spf);
 
-		r.select_zip(Poly(SelectChangeRef::default()), b.to_ref().sculpt().0)
-		.map(Poly(HAddChange));
+		// r.clone().select_zip(Poly(SelectChangeRef::default()), b.to_ref().sculpt().0)
+		// .map(Poly(HAddChange));
+
+		// r.map(Poly(MapNeg))
+		// .select_zip(Poly(SelectChangeRef::default()), a.to_ref().sculpt().0)
+		// .map(Poly(HAddChange));
+		r.select_zip(Poly(Select2ChangeRef::default()), a.to_ref().zip(b.to_ref()).sculpt().0).map(Poly(HChangeTransfer));
 	}, &ComputeTaskPoolScopeCreater);
+}
+
+pub fn grid_gas_spread_edge_wall<const DIM:usize>(grid_gas:Res<GridGasResource<DIM>>,simulate_speed:Res<SimulateSpeed>,_res_gas_grid_edge_wall:Res<GridGasEdgeWall>) {
+	let spf=simulate_speed.second_per_frame;
+	let volume:Num=Num::from_num(1);
+	let edge_len:Num=Num::from_num(1);
+
+	for dim in 0..DIM {
+		for dir in 0..=1 {
+			let dim_dir=DimDir{dim,dir_positive: (dir as i32).is_positive()};
+			let dir_vec: VecFix<DIM>=dim_dir.to_dir_vec().map(|a|Num::from_num(a)).into();
+			grid_gas.0.for_each_edge_parallel(dim_dir, &|a,_|{
+				let r=formulas::gas_cell_spread_to_side(
+					HMappableFrom::output_map(
+						a
+						.to_ref()
+						.sculpt().0,
+						Poly(MapFromStatRef)
+					)
+					, volume, dir_vec, edge_len, spf);
+				let mut m:Momentum<DIM>=r.pluck().0;
+				for i in 0..DIM {
+					m.0[(0,dim)]=if i==dim {
+						Num::from_num(0)
+					}else {
+						m.0[(0,dim)]*2
+					}
+				}
+				(hlist![m]).select_zip(Poly(SelectChangeRef::default()), a.to_ref().sculpt().0)
+				.map(Poly(HAddChange));
+			}
+			, &ComputeTaskPoolScopeCreater);
+		}
+	}
+
+	// grid_gas.0.iter_pair_parallel(&|a,b,i|{
+	// 	let edge_dir_vec: VecFix<DIM>=array::from_fn(|z|if z==i {Num::from_num(1)} else {Num::from_num(0)}).into();
+	// 	let r=formulas::gas_cell_spread_to_side(
+	// 		HMappableFrom::output_map(
+	// 			a
+	// 			.to_ref()
+	// 			.sculpt().0,
+	// 			Poly(MapFromStatRef)
+	// 		)
+	// 		, volume, edge_dir_vec, edge_len, spf);
+
+	// 	r.select_zip(Poly(SelectChangeRef::default()), b.to_ref().sculpt().0)
+	// 	.map(Poly(HAddChange));
+	// }, &ComputeTaskPoolScopeCreater);
+}
+
+pub fn grid_gas_spread_edge_void<const DIM:usize>(grid_gas:Res<GridGasResource<DIM>>,simulate_speed:Res<SimulateSpeed>,_res_gas_grid_edge_wall:Res<GridGasEdgeWall>) {
+	let spf=simulate_speed.second_per_frame;
+	let volume:Num=Num::from_num(1);
+	let edge_len:Num=Num::from_num(1);
+
+	for dim in 0..DIM {
+		for dir in 0..=1 {
+			let dim_dir=DimDir{dim,dir_positive: (dir as i32).is_positive()};
+			let dir_vec: VecFix<DIM>=dim_dir.to_dir_vec().map(|a|Num::from_num(a)).into();
+			grid_gas.0.for_each_edge_parallel(dim_dir, &|a,_|{
+				let r=formulas::gas_cell_spread_to_side(
+					HMappableFrom::output_map(
+						a
+						.to_ref()
+						.sculpt().0,
+						Poly(MapFromStatRef)
+					)
+					, volume, dir_vec, edge_len, spf);
+				r.map(Poly(MapNeg))
+				.select_zip(Poly(SelectChangeRef::default()), a.to_ref().sculpt().0)
+				.map(Poly(HAddChange));
+			}
+			, &ComputeTaskPoolScopeCreater);
+		}
+	}
+
+	// grid_gas.0.iter_pair_parallel(&|a,b,i|{
+	// 	let edge_dir_vec: VecFix<DIM>=array::from_fn(|z|if z==i {Num::from_num(1)} else {Num::from_num(0)}).into();
+	// 	let r=formulas::gas_cell_spread_to_side(
+	// 		HMappableFrom::output_map(
+	// 			a
+	// 			.to_ref()
+	// 			.sculpt().0,
+	// 			Poly(MapFromStatRef)
+	// 		)
+	// 		, volume, edge_dir_vec, edge_len, spf);
+
+	// 	r.select_zip(Poly(SelectChangeRef::default()), b.to_ref().sculpt().0)
+	// 	.map(Poly(HAddChange));
+	// }, &ComputeTaskPoolScopeCreater);
 }
 
 // pub fn grid_gas_spread_edge_wall<const DIM:usize>(grid_indexer:GridIndexer<DIM>,grid_gas_stat:Res<GridGasStatResource<DIM>>,grid_gas_delta:ResMut<GridGasDeltaResource<DIM>>,_res_gas_grid_edge_wall:Res<GridGasEdgeWall>,simulate_speed:Res<SimulateSpeed>){
