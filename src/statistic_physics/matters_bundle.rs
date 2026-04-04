@@ -1,17 +1,15 @@
 
-use std::{array, marker::PhantomData};
 
-use bevy::ecs::{bundle::Bundle, component::ComponentId, system::Commands};
+use bevy::ecs::bundle::Bundle;
 
 // use crate::components::{change_component::ChangeComponent, determining_components::DeterminingComponent, stat_component::StatComponent};
 
 
-use frunk::{self, Func, Poly, hlist::HMappable};
-use physics_basic::{num::Num, stats::*};
+use frunk::{Poly, hlist::HMappable};
 
-use statistic_physics::{formulas::calculate_matters_state, matters::MattersBasic, stats::*};
+use statistic_physics::{formulas::calculate_matters_state, matters::MattersBasic};
 
-use wacky_bag_bevy::{stat_component::{change::Change, determining::Determining, stat::Stat}, utils::stat_for_hlist::{MapToChange, MapToDetermining, MapToStat}};
+use wacky_bag_bevy::utils::stat_for_hlist::{MapToChange, MapToDetermining, MapToStat};
 
 // const DIM:usize=3;
 
