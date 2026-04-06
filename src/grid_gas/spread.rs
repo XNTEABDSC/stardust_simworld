@@ -1,15 +1,18 @@
 
+use std::str::FromStr;
+
 use bevy::ecs::system::Res;
 use frunk::{Poly, hlist};
+use nalgebra::{RealField, SVector};
+use wacky_bag::utils::num_extend::NumExtend;
 use wacky_bag::{structures::n_dim_array::{dim_dir::DimDir, t_n_dim_array::{TNDimArrayForEachEdgeParallel, TNDimArrayIterPairParallel}}, utils::{h_list_helpers::MapNeg, output_func::HMappableFrom, select_zip::HSelectZippable}};
 use wacky_bag_bevy::utils::{stat_for_hlist::{HAddChange, HChangeTransfer, MapFromStatRef, Select2ChangeRef, SelectChangeRef}, thread_scope::ComputeTaskPoolScopeCreater};
 
 
 use crate::{grid::grid::GridData, grid_gas::{edge_type::GridGasEdgeWall, resource::GridGasResource}, resources::simulate_speed::SimulateSpeed};
 
-use wacky_bag_fixed::vec_fix::VecFix;
 
-use physics_basic::{num::Num, stats::Momentum};
+use physics_basic::{stats::Momentum};
 use statistic_physics::formulas;
 
 /*
@@ -18,13 +21,15 @@ e^log2=2
 */
 
 
-pub fn grid_gas_spread<const DIM:usize>(grid_gas:Res<GridGasResource<DIM>>,simulate_speed:Res<SimulateSpeed>,grid_size:Res<GridData<DIM>>) {
+pub fn grid_gas_spread<Num:RealField+Copy+Default+const FromStr,const DIM:usize>(grid_gas:Res<GridGasResource<Num,DIM>>,simulate_speed:Res<SimulateSpeed<Num>>,grid_size:Res<GridData<Num,DIM>>) {
 	let spf=simulate_speed.second_per_frame;
 	let edge_len:Num=grid_size.grid_edge_len;
-	let volume:Num=cordic::exp(edge_len/Num::LOG2_E);
+	let volume:Num=grid_size.grid_volume;
+	//edge_len.exp2();
+	//cordic::exp(edge_len/Num::LOG2_E);
 
 	grid_gas.0.iter_pair_2_side_parallel(&|a,b,dim_dir|{
-		let edge_dir_vec: VecFix<DIM>=dim_dir.to_dir_vec().map(|a|Num::from_num(a)).into();
+		let edge_dir_vec=dim_dir.to_dir_vec().map(|a|Num::from_isize(a).unwrap()).into();
 		let r=formulas::gas_cell_spread_to_side(
 			HMappableFrom::output_map(
 				a
@@ -44,15 +49,15 @@ pub fn grid_gas_spread<const DIM:usize>(grid_gas:Res<GridGasResource<DIM>>,simul
 	}, &ComputeTaskPoolScopeCreater);
 }
 
-pub fn grid_gas_spread_edge_wall<const DIM:usize>(grid_gas:Res<GridGasResource<DIM>>,simulate_speed:Res<SimulateSpeed>,_res_gas_grid_edge_wall:Res<GridGasEdgeWall>) {
+pub fn grid_gas_spread_edge_wall<Num:RealField+Copy+Default+const FromStr,const DIM:usize>(grid_gas:Res<GridGasResource<Num,DIM>>,simulate_speed:Res<SimulateSpeed<Num>>,grid_size:Res<GridData<Num,DIM>>,_res_gas_grid_edge_wall:Res<GridGasEdgeWall>) {
 	let spf=simulate_speed.second_per_frame;
-	let volume:Num=Num::from_num(1);
-	let edge_len:Num=Num::from_num(1);
+	let edge_len:Num=grid_size.grid_edge_len;
+	let volume:Num=grid_size.grid_volume;
 
 	for dim in 0..DIM {
 		for dir in 0..=1 {
 			let dim_dir=DimDir{dim,dir_positive: (dir as i32).is_positive()};
-			let dir_vec: VecFix<DIM>=dim_dir.to_dir_vec().map(|a|Num::from_num(a)).into();
+			let dir_vec=dim_dir.to_dir_vec().map(|a|Num::from_isize(a).unwrap()).into();
 			grid_gas.0.for_each_edge_parallel(dim_dir, &|a,_|{
 				let r=formulas::gas_cell_spread_to_side(
 					HMappableFrom::output_map(
@@ -62,12 +67,12 @@ pub fn grid_gas_spread_edge_wall<const DIM:usize>(grid_gas:Res<GridGasResource<D
 						Poly(MapFromStatRef)
 					)
 					, volume, dir_vec, edge_len, spf);
-				let mut m:Momentum<DIM>=r.pluck().0;
+				let mut m:Momentum<Num,DIM>=r.pluck().0;
 				for i in 0..DIM {
 					m.0[(0,dim)]=if i==dim {
-						Num::from_num(0)
+						Num::zero()
 					}else {
-						m.0[(0,dim)]*2
+						m.0[(0,dim)]*Num::p2()
 					}
 				}
 				(hlist![m]).select_zip(Poly(SelectChangeRef::default()), a.to_ref().sculpt().0)
@@ -93,15 +98,15 @@ pub fn grid_gas_spread_edge_wall<const DIM:usize>(grid_gas:Res<GridGasResource<D
 	// }, &ComputeTaskPoolScopeCreater);
 }
 
-pub fn grid_gas_spread_edge_void<const DIM:usize>(grid_gas:Res<GridGasResource<DIM>>,simulate_speed:Res<SimulateSpeed>,_res_gas_grid_edge_wall:Res<GridGasEdgeWall>) {
+pub fn grid_gas_spread_edge_void<Num:RealField+Copy+Default+const FromStr,const DIM:usize>(grid_gas:Res<GridGasResource<Num,DIM>>,simulate_speed:Res<SimulateSpeed<Num>>,grid_size:Res<GridData<Num,DIM>>,_res_gas_grid_edge_wall:Res<GridGasEdgeWall>) {
 	let spf=simulate_speed.second_per_frame;
-	let volume:Num=Num::from_num(1);
-	let edge_len:Num=Num::from_num(1);
+	let volume:Num=grid_size.grid_volume;
+	let edge_len:Num=grid_size.grid_edge_len;
 
 	for dim in 0..DIM {
 		for dir in 0..=1 {
 			let dim_dir=DimDir{dim,dir_positive: (dir as i32).is_positive()};
-			let dir_vec: VecFix<DIM>=dim_dir.to_dir_vec().map(|a|Num::from_num(a)).into();
+			let dir_vec=dim_dir.to_dir_vec().map(|a|Num::from_isize(a).unwrap()).into();
 			grid_gas.0.for_each_edge_parallel(dim_dir, &|a,_|{
 				let r=formulas::gas_cell_spread_to_side(
 					HMappableFrom::output_map(

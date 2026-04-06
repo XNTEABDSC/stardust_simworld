@@ -7,6 +7,7 @@ use bevy::ecs::bundle::Bundle;
 
 use frunk::{Poly, hlist::HMappable};
 
+use nalgebra::RealField;
 use statistic_physics::{formulas::calculate_matters_state, matters::MattersBasic};
 
 use wacky_bag_bevy::utils::stat_for_hlist::{MapToChange, MapToDetermining, MapToStat};
@@ -36,10 +37,10 @@ use wacky_bag_bevy::utils::stat_for_hlist::{MapToChange, MapToDetermining, MapTo
 // }
 
 
-pub fn matters_bundle<const DIM:usize>(matters_basic:MattersBasic<DIM>)->impl Bundle{
+pub fn matters_bundle<Num:RealField+Copy+Default,const DIM:usize>(matters_basic:MattersBasic<Num,DIM>)->impl Bundle{
 	let stat_matters_full=calculate_matters_state(matters_basic).map(Poly(MapToStat));
-	let matters_determing=<MattersBasic<DIM> as HMappable<Poly<MapToDetermining>>>::Output::default();
-	let matters_change=<MattersBasic<DIM> as HMappable<Poly<MapToChange>>>::Output::default();
+	let matters_determing=<MattersBasic<Num,DIM> as HMappable<Poly<MapToDetermining>>>::Output::default();
+	let matters_change=<MattersBasic<Num,DIM> as HMappable<Poly<MapToChange>>>::Output::default();
 	(stat_matters_full+matters_determing+matters_change).into_tuple2()
 	// stat_matters_full.
 }

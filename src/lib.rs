@@ -1,4 +1,5 @@
-
+#![feature(const_trait_impl)]
+#![feature(const_convert)]
 
 // pub mod components;
 // pub mod systems;

@@ -1,15 +1,15 @@
 use std::ops::Deref;
 
 use bevy_ecs_macros::Component;
-use physics_basic::num::Num;
+// use physics_basic::num::Num;
 
 
 
-/// How much time does this entity passes this frame
-/// 
-/// Why not
-#[derive(Component)]
-pub struct TimePerFrame(pub Num);
+// /// How much time does this entity passes this frame
+// /// 
+// /// Why not
+// #[derive(Component)]
+// pub struct TimePerFrame(pub Num);
 
 // impl TimePerFrame {
 // 	/// How much time does this entity passes this frame
