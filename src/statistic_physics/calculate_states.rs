@@ -13,11 +13,11 @@ use wacky_bag_bevy::{stat_component::{determining::Determining, stat::Stat}, sys
 
 
 pub fn calculate_states<Num:RealField+Copy,const DIM:usize>(mut query:Query<
-    (&Stat< Mass<Num>>,&Stat<Momentum<Num,DIM>>,&Stat<Energy<Num>>,&mut Stat<Vel<Num,DIM>>,&mut Stat<Kinetic<Num>>,&mut Stat<Internal<Num>>,&mut Stat<VelVarSq<Num>>,&mut Stat<VelVar<Num>>,&mut Stat<VelVarSq1Dir<Num>>,&mut Stat<VelVar1Dir<Num>>)
+    (&Stat< Mass<Num>>,&Stat<Momentum<Num,DIM>>,&Stat<Energy<Num>>,&mut Stat<Vel<Num,DIM>>,&mut Stat<Kinetic<Num>>,&mut Stat<Internal<Num>>,&mut Stat<VelVarSq<Num>>,&mut Stat<VelVar<Num>>,&mut Stat<VelVarSq1Dir<Num>>,&mut Stat<VelVar1Dir<Num>>,&Stat<Volume<Num>>,&mut Stat<Density<Num>>)
     ,(With<Determining<Mass<Num>>>,With<Determining<Momentum<Num,DIM>>>,With<Determining<Energy<Num>>>)>){
     query.par_iter_mut().for_each(
-        |(mass,momentum,energy,mut vel,mut kinetic,mut internal,mut vel_var_sq,mut vel_var,mut vel_var_sq_1dir,mut vel_var_1dir)|{
-            calculate_matters_state_inplace(hlist!(&mass.0,&momentum.0,&energy.0,&mut vel.0,&mut kinetic.0,&mut internal.0,&mut vel_var_sq.0,&mut vel_var.0,&mut vel_var_sq_1dir.0,&mut vel_var_1dir.0));
+        |(mass,momentum,energy,mut vel,mut kinetic,mut internal,mut vel_var_sq,mut vel_var,mut vel_var_sq_1dir,mut vel_var_1dir,volume,mut density)|{
+            calculate_matters_state_inplace(hlist!(&mass.0,&momentum.0,&energy.0,&mut vel.0,&mut kinetic.0,&mut internal.0,&mut vel_var_sq.0,&mut vel_var.0,&mut vel_var_sq_1dir.0,&mut vel_var_1dir.0,volume,&mut density));
     });
 }
 

@@ -13,9 +13,10 @@ pub type GridResource<const DIM:usize,T>=NDimChunkArray<DIM,T>;
 #[derive(Resource,Deref)]
 pub struct GridIndexer<const DIM:usize>(pub Arc<NDimIndexer<DIM>>);
 
-#[derive(Resource)]
+#[derive(Resource,Clone)]
 pub struct GridData<Num,const DIM:usize>{
-	pub ranges:[Range<isize>;DIM],
+	// pub ranges:[Range<isize>;DIM],
+	pub ranges:[usize;DIM],
 	pub grid_edge_len:Num,
 	pub grid_volume:Num
 }

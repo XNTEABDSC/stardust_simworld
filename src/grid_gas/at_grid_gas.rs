@@ -4,7 +4,7 @@ use bevy::{app::{App, FixedPostUpdate, FixedPreUpdate}, ecs::{entity::Entity, sc
 use bevy_ecs_macros::Component;
 use frunk::{HList, HNil, Poly};
 use nalgebra::RealField;
-use statistic_physics::matters::MattersBasic;
+use statistic_physics::matters::{MattersBasic, MattersBasicStat};
 use wacky_bag::{structures::n_dim_array::t_n_dim_array::TNDimArray, utils::h_list_helpers::{HMapP, HToMut, HToRef}};
 use wacky_bag_bevy::{system::processing_system::ScheduleConfigsProcessing, utils::stat_for_hlist::{HChangeApplyChange, HChangeGetAndReset, MapTakeStatChange, MapToChange}};
 
@@ -36,8 +36,8 @@ pub fn apply_at_grid_gas_change<Num:RealField+Copy+Default,const DIM: usize>(mut
 		let grid_c_may=res.0.get(&pos.0);
 		match grid_c_may {
 			Some(grid_cell) => {
-				let grid_cell_changes: HToRef<HMapP<MattersBasic<Num,DIM>,MapToChange>> =grid_cell.to_ref().sculpt().0;
-				let at_cell_changes: HToMut<HMapP<MattersBasic<Num,DIM>,MapToChange>> =at_cell.0.to_mut().sculpt().0;
+				let grid_cell_changes: HToRef<HMapP<MattersBasicStat<Num,DIM>,MapToChange>> =grid_cell.to_ref().sculpt().0;
+				let at_cell_changes: HToMut<HMapP<MattersBasicStat<Num,DIM>,MapToChange>> =at_cell.0.to_mut().sculpt().0;
 				// let a_num=Num::default();
 				// let dawdawd:Momentum<DIM>=Momentum();
 				at_cell_changes.zip(grid_cell_changes).map(Poly(HChangeApplyChange));
@@ -46,7 +46,7 @@ pub fn apply_at_grid_gas_change<Num:RealField+Copy+Default,const DIM: usize>(mut
 			None => {
 				warn!("entity {} at grid idx {:?} is not in grid cell",e,pos.0);
 				
-				let at_cell_changes: HToMut<HMapP<MattersBasic<Num,DIM>,MapToChange>> =at_cell.0.to_mut().sculpt().0;
+				let at_cell_changes: HToMut<HMapP<MattersBasicStat<Num,DIM>,MapToChange>> =at_cell.0.to_mut().sculpt().0;
 				at_cell_changes.map(Poly(HChangeGetAndReset));
 			},
 		}

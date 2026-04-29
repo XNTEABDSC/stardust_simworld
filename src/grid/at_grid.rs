@@ -1,9 +1,10 @@
 use bevy::{app::{App, FixedPreUpdate}, ecs::{schedule::IntoScheduleConfigs, system::{Query, Res}}, utils::default};
 use bevy_ecs_macros::Component;
+use frunk::{HList, HNil};
 use nalgebra::RealField;
 use physics_basic::stats::Pos;
 use wacky_bag::structures::n_dim_array::n_dim_index::NDimIndex;
-use wacky_bag_bevy::{stat_component::stat::Stat, system::processing_system::ProcessingSystemSet};
+use wacky_bag_bevy::{stat_component::stat::Stat, system::processing_system::{ProcessingSystemSet, ScheduleConfigsProcessing}};
 
 use crate::{grid::grid::GridData, schedule::schedule_pre_sim};
 
@@ -25,7 +26,12 @@ pub fn entity_at_grid<Num:RealField+Copy,const DIM:usize>(mut q:Query<(&Stat<Pos
 pub fn entity_at_grid_plugin<Num:RealField+Copy,const DIM:usize>(app:&mut App){
 	app.add_systems(schedule_pre_sim(), 
 		entity_at_grid::<Num,DIM>.into_configs()
-		.after(ProcessingSystemSet::<Stat<Pos<Num,DIM>>>::default())
-		.before(ProcessingSystemSet::<AtGridCell<DIM>>::default())
+		.config_processing::<
+			HList!(Stat<Pos<Num,DIM>>),
+			HNil,
+			HList!(AtGridCell<DIM>)
+		>()
+		// .after(ProcessingSystemSet::<Stat<Pos<Num,DIM>>>::default())
+		// .before(ProcessingSystemSet::<AtGridCell<DIM>>::default())
 	);
 }

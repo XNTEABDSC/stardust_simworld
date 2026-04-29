@@ -8,6 +8,7 @@ use bevy_ecs_macros::Component;
 // /// How much time does this entity passes this frame
 // /// 
 // /// Why not
+// not in physics::time_pass
 // #[derive(Component)]
 // pub struct TimePerFrame(pub Num);
 
