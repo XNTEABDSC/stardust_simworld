@@ -2,6 +2,7 @@
 use std::str::FromStr;
 
 use bevy::ecs::system::Res;
+use bevy::log::info;
 use frunk::{Poly, hlist};
 use nalgebra::{RealField, SVector};
 use wacky_bag::math::normal_cdf::NormalCdfConsts;
@@ -23,8 +24,8 @@ e^log2=2
 */
 
 
-pub fn grid_gas_spread<Num:RealField+Copy+Default+NormalCdfConsts<Marker>,const DIM:usize,Marker>(grid_gas:Res<GridGasResource<Num,DIM>>,simulate_speed:Res<SimulateSpeed<Num>>,grid_size:Res<GridData<Num,DIM>>) {
-	let spf=simulate_speed.second_per_frame;
+pub fn grid_gas_spread<Num:RealField+Copy+NormalCdfConsts<Marker>,const DIM:usize,Marker>(grid_gas:Res<GridGasResource<Num,DIM>>,simulate_speed:Res<SimulateSpeed<Num>>,grid_size:Res<GridData<Num,DIM>>) {
+	let dt=simulate_speed.second_per_frame;
 	let edge_len:Num=grid_size.grid_edge_len;
 	// let volume:Num=grid_size.grid_volume;
 	//edge_len.exp2();
@@ -39,7 +40,7 @@ pub fn grid_gas_spread<Num:RealField+Copy+Default+NormalCdfConsts<Marker>,const 
 				.sculpt().0,
 				Poly(MapFromStatRef)
 			)
-			, edge_dir_vec, edge_len, spf);
+			, edge_dir_vec, edge_len, dt);
 
 		// r.clone().select_zip(Poly(SelectChangeRef::default()), b.to_ref().sculpt().0)
 		// .map(Poly(HAddChange));
@@ -51,7 +52,12 @@ pub fn grid_gas_spread<Num:RealField+Copy+Default+NormalCdfConsts<Marker>,const 
 	}, &ComputeTaskPoolScopeCreater);
 }
 
-pub fn grid_gas_spread_edge_wall<Num:RealField+Copy+Default+NormalCdfConsts<Marker>,const DIM:usize,Marker:Send+Sync+'static>(grid_gas:Res<GridGasResource<Num,DIM>>,simulate_speed:Res<SimulateSpeed<Num>>,grid_size:Res<GridData<Num,DIM>>,_res_gas_grid_edge_wall:Res<GridGasEdgeWall<Num,DIM,Marker>>) {
+pub fn grid_gas_spread_plugin<Num:RealField+Copy+NormalCdfConsts<Marker>,const DIM:usize,Marker:'static>(app:&mut bevy::app::App){
+	app.add_systems(crate::schedule::schedule_sim(), grid_gas_spread::<Num,DIM,Marker>);
+}
+
+pub fn grid_gas_spread_edge_wall<Num:RealField+Copy+NormalCdfConsts<Marker>,const DIM:usize,Marker:Send+Sync+'static>(grid_gas:Res<GridGasResource<Num,DIM>>,simulate_speed:Res<SimulateSpeed<Num>>,grid_size:Res<GridData<Num,DIM>>,_res_gas_grid_edge_wall:Res<GridGasEdgeWall<Num,DIM,Marker>>) {
+	
 	let dt=simulate_speed.second_per_frame;
 	let edge_len:Num=grid_size.grid_edge_len;
 
@@ -75,9 +81,9 @@ pub fn grid_gas_spread_edge_wall<Num:RealField+Copy+Default+NormalCdfConsts<Mark
 				let mut m:Momentum<Num,DIM>=r.pluck().0;
 
 				for i in 0..DIM {
-					m.0[(0,dim)]=if i==dim {
-						-m.0[(0,dim)]*Num::p2()
-					}else {
+					m.0[dim] = if i==dim {
+						-m.0[dim]*Num::p2()
+					} else {
 						Num::zero()
 					}
 				}
@@ -106,7 +112,7 @@ pub fn grid_gas_spread_edge_wall<Num:RealField+Copy+Default+NormalCdfConsts<Mark
 	// }, &ComputeTaskPoolScopeCreater);
 }
 
-pub fn grid_gas_spread_edge_const<Num:RealField+Copy+Default+NormalCdfConsts<Marker>,const DIM:usize,Marker:Send+Sync+'static>(grid_gas:Res<GridGasResource<Num,DIM>>,simulate_speed:Res<SimulateSpeed<Num>>,grid_size:Res<GridData<Num,DIM>>,res_gas_grid_edge_const:Res<GridGasEdgeConst<Num,DIM,Marker>>) {
+pub fn grid_gas_spread_edge_const<Num:RealField+Copy+NormalCdfConsts<Marker>,const DIM:usize,Marker:Send+Sync+'static>(grid_gas:Res<GridGasResource<Num,DIM>>,simulate_speed:Res<SimulateSpeed<Num>>,grid_size:Res<GridData<Num,DIM>>,res_gas_grid_edge_const:Res<GridGasEdgeConst<Num,DIM,Marker>>) {
 	let dt=simulate_speed.second_per_frame;
 	let edge_len:Num=grid_size.grid_edge_len;
 

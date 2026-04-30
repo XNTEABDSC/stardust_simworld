@@ -14,7 +14,7 @@ use crate::{grid::at_grid::AtGridCell, grid_gas::resource::{GridGasDatas, GridGa
 #[derive(Component)]
 pub struct AtGridCellGas<Num,const DIM:usize>(pub GridGasDatas<Num,DIM>);
 
-pub fn set_at_grid_gas<Num:RealField+Copy+Default,const DIM:usize>(mut q:Query<(Entity,&AtGridCell<DIM>,Option<&mut AtGridCellGas<Num,DIM>>)>,res:Res<GridGasResource<Num,DIM>>, p_cmd:ParallelCommands ){
+pub fn set_at_grid_gas<Num:RealField+Copy,const DIM:usize>(mut q:Query<(Entity,&AtGridCell<DIM>,Option<&mut AtGridCellGas<Num,DIM>>)>,res:Res<GridGasResource<Num,DIM>>, p_cmd:ParallelCommands ){
 	q.par_iter_mut().for_each(|(e,pos,c_may)|{
 		let new_c_may=res.0.get(&pos.0);
 		match c_may {
@@ -30,7 +30,7 @@ pub fn set_at_grid_gas<Num:RealField+Copy+Default,const DIM:usize>(mut q:Query<(
 	});
 }
 
-pub fn apply_at_grid_gas_change<Num:RealField+Copy+Default,const DIM: usize>(mut q:Query<(Entity,&AtGridCell<DIM>,&mut AtGridCellGas<Num,DIM>)>,res:Res<GridGasResource<Num,DIM>>)
+pub fn apply_at_grid_gas_change<Num:RealField+Copy,const DIM: usize>(mut q:Query<(Entity,&AtGridCell<DIM>,&mut AtGridCellGas<Num,DIM>)>,res:Res<GridGasResource<Num,DIM>>)
 {
 	q.par_iter_mut().for_each(|(e,pos,mut at_cell)|{
 		let grid_c_may=res.0.get(&pos.0);
@@ -53,7 +53,7 @@ pub fn apply_at_grid_gas_change<Num:RealField+Copy+Default,const DIM: usize>(mut
 	});
 }
 
-pub fn plugin<Num:RealField+Copy+Default,const DIM:usize>(app:&mut App){
+pub fn plugin<Num:RealField+Copy,const DIM:usize>(app:&mut App){
 	app.add_systems(schedule_pre_sim(), 
 		set_at_grid_gas::<Num,DIM>.into_configs()
 		.config_processing::<HList!(AtGridCell<DIM>),HNil,HList!(AtGridCellGas<Num,DIM>)>()

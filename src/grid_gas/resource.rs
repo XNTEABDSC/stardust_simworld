@@ -29,10 +29,12 @@ pub fn grid_gas_datas<Num,const DIM:usize>(basics:MattersBasic<Num,DIM>)->GridGa
 	stats+changes
 }
 
+
+
 #[derive(Resource,Clone)]
 pub struct GridGasResource<Num,const DIM:usize>(pub GridResource<DIM,GridGasDatas<Num,DIM>>);
 
-pub fn grid_gas_apply_changes<Num:RealField+Copy+Default,const DIM:usize>(mut grid_gas:ResMut<GridGasResource<Num,DIM>>){
+pub fn grid_gas_apply_changes<Num:RealField+Copy,const DIM:usize>(mut grid_gas:ResMut<GridGasResource<Num,DIM>>){
 	grid_gas.0.for_each_mut_parallel(&|g,_|{
 		let (changes,r)
 			:(<<MattersBasicStat::<Num,DIM> as HMappable<Poly<MapToChange>>>::Output as ToMut>::Output,_)
@@ -52,6 +54,6 @@ pub fn grid_gas_apply_changes<Num:RealField+Copy+Default,const DIM:usize>(mut gr
 	}, &ComputeTaskPoolScopeCreater);
 }
 
-pub fn grid_gas_apply_changes_plugin<Num:RealField+Copy+Default,const DIM:usize>(app:&mut App){
+pub fn grid_gas_apply_changes_plugin<Num:RealField+Copy,const DIM:usize>(app:&mut App){
 	app.add_systems(schedule_apply_change(), grid_gas_apply_changes::<Num,DIM>);
 }
