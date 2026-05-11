@@ -6,7 +6,7 @@ use bevy::log::info;
 use frunk::{Poly, hlist};
 use nalgebra::{RealField, SVector};
 use wacky_bag::math::normal_cdf::NormalCdfConsts;
-use wacky_bag::utils::num_extend::NumExtend;
+use wacky_bag::utils::num_extend::NumExtends;
 use wacky_bag::{structures::n_dim_array::{dim_dir::DimDir, t_n_dim_array::{TNDimArrayForEachEdgeParallel, TNDimArrayIterPairParallel}}, utils::{h_list_helpers::MapNeg, output_func::HMappableFrom, select_zip::HSelectZippable}};
 use wacky_bag_bevy::utils::{stat_for_hlist::{HAddChange, HChangeTransfer, MapFromStatRef, Select2ChangeRef, SelectChangeRef}, thread_scope::ComputeTaskPoolScopeCreater};
 

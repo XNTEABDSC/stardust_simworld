@@ -17,6 +17,9 @@
 		},
 		{
 			"path": "../../repos/wacky_bag_bevy"
+		},
+		{
+			"path": "../../repos/impl_simba_for_fixed"
 		}
 	],
 	"settings": {}
