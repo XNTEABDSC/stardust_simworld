@@ -22,6 +22,7 @@ nalgebra = "0.34.0"
 bevy_ecs_macros = "0.18.1"
 # ambassador = "0.4.1"
 simba = "0.9.1"
+name_type_for_fn = {path = "../../repos/name_type_for_fn"}
 
 [target.x86_64-pc-windows-msvc]
 linker = "rust-lld.exe"

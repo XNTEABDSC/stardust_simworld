@@ -5,7 +5,7 @@ use nalgebra::{Const, Matrix, RealField, SMatrix, SVector, Storage};
 use physics_basic::{rotation::{AngularVel, Rotation}, stats::TimePass};
 pub use physics_basic::stats::{Pos,Vel,DirVec};
 use simba::scalar::SupersetOf;
-use wacky_bag_bevy::{stat_component::stat::Stat, utils::h_list_query_data::HQueryData};
+use wacky_bag_bevy::{stat_component::stat::Stat, utils::h_list_query_data_old::HQueryData};
 
 pub fn vec_3_num_to_f32<Num:RealField,S:Storage<Num,Const<3>,Const<1>>>(v:
 	// &SVector<Num,3>

@@ -20,6 +20,9 @@
 		},
 		{
 			"path": "../../repos/impl_simba_for_fixed"
+		},
+		{
+			"path": "../../repos/name_type_for_fn"
 		}
 	],
 	"settings": {}
