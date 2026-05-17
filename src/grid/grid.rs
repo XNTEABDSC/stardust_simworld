@@ -1,4 +1,4 @@
-use std::{ops::Range, sync::Arc};
+use std::sync::Arc;
 
 use bevy::{ecs::resource::Resource, reflect::Reflect};
 use derive_more::Deref;

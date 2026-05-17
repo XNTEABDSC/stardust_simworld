@@ -1,7 +1,7 @@
 use std::ops::Add;
 
-use bevy::{app::App, ecs::{resource::Resource, schedule::IntoScheduleConfigs, system::ResMut}, log::{info, info_once}, reflect::Reflect};
-use frunk::{HCons, HList, HNil, Poly, ToMut, hlist::HMappable};
+use bevy::{app::App, ecs::{resource::Resource, schedule::IntoScheduleConfigs, system::ResMut}, reflect::Reflect};
+use frunk::{HList, HNil, Poly, ToMut, hlist::HMappable};
 use nalgebra::RealField;
 use statistic_physics::{formulas::{self, calculate_matters_state_inplace_m}, matters::{MattersBasic, MattersBasicStat, MattersFull}};
 use wacky_bag::{structures::n_dim_array::t_n_dim_array::TNDimArrayForEachParallel, utils::{h_list_helpers::HMapP, output_func::HMappableFrom}};

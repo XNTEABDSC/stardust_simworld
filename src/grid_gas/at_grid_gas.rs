@@ -1,10 +1,9 @@
-use std::array;
 
-use bevy::{app::{App, FixedPostUpdate, FixedPreUpdate}, ecs::{entity::Entity, schedule::IntoScheduleConfigs, system::{ParallelCommands, Query, Res}}, log::warn, reflect::Reflect};
+use bevy::{app::App, ecs::{entity::Entity, schedule::IntoScheduleConfigs, system::{ParallelCommands, Query, Res}}, log::warn, reflect::Reflect};
 use bevy_ecs_macros::Component;
 use frunk::{HList, HNil, Poly};
 use nalgebra::RealField;
-use statistic_physics::matters::{MattersBasic, MattersBasicStat};
+use statistic_physics::matters::MattersBasicStat;
 use wacky_bag::{structures::n_dim_array::t_n_dim_array::TNDimArray, utils::h_list_helpers::{HMapP, HToMut, HToRef}};
 use wacky_bag_bevy::{system::processing_system::ScheduleConfigsProcessing, utils::stat_for_hlist::{HChangeApplyChange, HChangeGetAndReset, MapTakeStatChange, MapToChange}};
 

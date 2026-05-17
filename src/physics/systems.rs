@@ -1,16 +1,15 @@
 use std::{marker::PhantomData};
 
-use bevy::{app::{App, PluginGroup, PluginGroupBuilder}, ecs::{query::{QueryData, ReadOnlyQueryData}, schedule::{IntoScheduleConfigs, ScheduleConfigs}, system::{IntoSystem, Query, ScheduleSystem, SystemInput}, world::Mut}, prelude::SystemParamFunction};
-use frunk::{Func, HNil, Poly,hlist , hlist::{HFoldLeftable, HMappable, HZippable}};
+use bevy::{app::{App, PluginGroup, PluginGroupBuilder}, ecs::{query::{QueryData, ReadOnlyQueryData}, schedule::{IntoScheduleConfigs, ScheduleConfigs}, system::{IntoSystem, Query, ScheduleSystem}}, prelude::SystemParamFunction};
+use frunk::{HNil, Poly , hlist::{HFoldLeftable, HMappable, HZippable}};
 use nalgebra::{Const, DefaultAllocator, DimMin, DimName, RealField, allocator::Allocator};
 use physics_basic::{body::{calculate_angular_state, calculate_position_state}, rotation::{DimNameToSoDimName, DimNameToSoDimNameType}};
 use statistic_physics::formulas::{calculate_density, calculate_vel_var};
 use wacky_bag::utils::{default_of::default, h_list_helpers::{HMapP, HTypeFnToMapper, HZip, MapFromRef, MapMut, MapRef, MapToPhantom}, type_fn::{ChainFunc, ReverseFunc}};
-use wacky_bag_bevy::{stat_component::{determining_apply_changes::{MapToDeterminingApplyChanges2Plugin, MapToDeterminingApplyChangesPlugin, determining_apply_changes, determining_apply_changes_2}, stat::Stat}, system::{multi_sets::{FoldScheduleConfigsAfterSets, FoldScheduleConfigsBeforeSets}, processing_system::{MapToProcessingSystemSet, ScheduleConfigsProcessing}}, utils::{fold_plugin_group_add::FoldPluginGroupBuilderAdd, h_list_query::{HToQuery, HToQueryType}, plugin_add_systems::plugin_add_systems, stat_for_hlist::{HChangeAdd, HStatSet, MapFromStatRef, MapToChange, MapToStat}}};
+use wacky_bag_bevy::{stat_component::determining_apply_changes::MapToDeterminingApplyChanges2Plugin, system::{multi_sets::{FoldScheduleConfigsAfterSets, FoldScheduleConfigsBeforeSets}, processing_system::{MapToProcessingSystemSet, ScheduleConfigsProcessing}}, utils::{fold_plugin_group_add::FoldPluginGroupBuilderAdd, h_list_query::{HToQuery, HToQueryType}, stat_for_hlist::{HChangeAdd, HStatSet, MapFromStatRef, MapToChange, MapToStat}}};
 
-use physics_basic::stats::*;
 
-use crate::{physics::bundle::PhyBodyStatisticBundleDetermining, schedule::{schedule_apply_change, schedule_pre_sim}};
+use crate::{physics::bundle::PhyBodyStatisticBundleDetermining, schedule::schedule_pre_sim};
 
 /// use [to_calculate_system] for system instead for type system to find marker
 #[derive(Debug,Default,Clone, Copy)]

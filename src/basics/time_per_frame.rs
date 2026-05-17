@@ -1,6 +1,4 @@
-use std::ops::Deref;
 
-use bevy_ecs_macros::Component;
 // use physics_basic::num::Num;
 
 

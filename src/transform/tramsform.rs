@@ -1,12 +1,11 @@
 
 use bevy::{app::{App, Update}, ecs::system::{Query, Res}, math::{Mat3, Quat, Vec3}, reflect::Reflect, time::{Fixed, Time}, transform::components::Transform};
 use bevy_ecs_macros::Resource;
-use frunk::HList;
-use nalgebra::{Const, Matrix, RealField, SMatrix, SVector, Storage};
+use nalgebra::{Const, Matrix, RealField, Storage};
 use physics_basic::{rotation::{AngularVel, Rotation}, stats::TimePass};
 pub use physics_basic::stats::{Pos,Vel,DirVec};
 use simba::scalar::SupersetOf;
-use wacky_bag_bevy::{stat_component::stat::Stat, utils::h_list_query_data_old::HQueryData};
+use wacky_bag_bevy::stat_component::stat::Stat;
 #[derive(Resource,Debug,Clone, Copy,Reflect)]
 pub struct WldLengthToScreenLength{
 	pub wld_len_2_screen_len:f32,

@@ -1,10 +1,8 @@
 use std::marker::PhantomData;
 
-use bevy::{app::{PluginGroup, PluginGroupBuilder, Plugins}, ecs::resource::Resource, reflect::Reflect};
-use frunk::HList;
+use bevy::{app::{PluginGroup, PluginGroupBuilder}, ecs::resource::Resource, reflect::Reflect};
 use nalgebra::RealField;
-use physics_basic::stats::{Vel,Density};
-use statistic_physics::{formulas::GasCellSpreadToSideType, stats::{VelVar1Dir, VelVarSq1Dir}};
+use statistic_physics::formulas::GasCellSpreadToSideType;
 use wacky_bag::math::normal_cdf::NormalCdfConsts;
 use wacky_bag_bevy::utils::plugin_add_systems::{plugin_add_systems, plugin_insert_resource};
 

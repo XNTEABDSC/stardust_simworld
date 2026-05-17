@@ -1,12 +1,12 @@
 use std::marker::PhantomData;
 
-use bevy::app::{App, Plugin, PluginGroup, PluginGroupBuilder, Plugins};
+use bevy::app::{App, PluginGroup, PluginGroupBuilder};
 use nalgebra::{Const, DefaultAllocator, DimName, RealField, allocator::Allocator};
 use physics_basic::rotation::{DimNameToSoDimName, DimNameToSoDimNameType};
 use wacky_bag::math::normal_cdf::NormalCdfConsts;
 use wacky_bag_bevy::utils::plugin_add_systems::plugin_add_systems;
 
-use crate::{grid_gas::{interact_grid_gas_body::interact_grid_gas_body, resource::{GridGasResource, grid_gas_calculate_plugin}, spread::grid_gas_spread}, schedule::schedule_sim};
+use crate::{grid_gas::{interact_grid_gas_body::interact_grid_gas_body, resource::{GridGasResource, grid_gas_calculate_plugin}}, schedule::schedule_sim};
 
 pub mod edge_type;
 pub mod spread;

@@ -1,9 +1,9 @@
 use bevy::{app::App, ecs::system::Query};
 use nalgebra::{Const, DimMin, RealField};
-use physics_basic::{rotation::{AngularVel, Rotation, RotationDelta, angular_vel_to_rotation}, stats::TimePass};
-use wacky_bag_bevy::stat_component::{change::Change, change_generic::{AlgebraicSystemMul, ChangeGeneric}, determining_apply_changes::determining_apply_changes_2, stat::Stat};
+use physics_basic::{rotation::{AngularVel, RotationDelta, angular_vel_to_rotation}, stats::TimePass};
+use wacky_bag_bevy::stat_component::{change::Change, stat::Stat};
 
-use crate::schedule::{schedule_apply_change, schedule_sim};
+use crate::schedule::schedule_sim;
 
 
 
