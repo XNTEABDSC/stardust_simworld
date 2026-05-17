@@ -1,4 +1,4 @@
-use bevy::{app::{App, FixedPreUpdate}, ecs::{schedule::IntoScheduleConfigs, system::{Query, Res}}, utils::default};
+use bevy::{app::{App, FixedPreUpdate}, ecs::{schedule::IntoScheduleConfigs, system::{Query, Res}}, reflect::Reflect, utils::default};
 use bevy_ecs_macros::Component;
 use frunk::{HList, HNil};
 use nalgebra::RealField;
@@ -8,7 +8,7 @@ use wacky_bag_bevy::{stat_component::stat::Stat, system::processing_system::{Pro
 
 use crate::{grid::grid::GridData, schedule::schedule_pre_sim};
 
-#[derive(Component)]
+#[derive(Component,Reflect)]
 pub struct AtGridCell<const DIM:usize>(pub NDimIndex<DIM>);
 
 pub fn entity_at_grid<Num:RealField+Copy,const DIM:usize>(mut q:Query<(&Stat<Pos<Num,DIM>>,&mut AtGridCell<DIM>)>,grid_data:Res<GridData<Num,DIM>>) {

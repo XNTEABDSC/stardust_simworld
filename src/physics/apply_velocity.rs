@@ -1,7 +1,7 @@
 
 use bevy::{app::App, ecs::system::Query};
 use nalgebra::RealField;
-use physics_basic::stats::{ Pos, Vel};
+use physics_basic::stats::{ Pos, TimePass, Vel};
 use wacky_bag_bevy::stat_component::{change::Change, stat::Stat};
 
 use crate::schedule::schedule_sim;
@@ -9,10 +9,10 @@ use crate::schedule::schedule_sim;
 
 
 
-pub fn apply_velocity<Num:RealField+Copy,const DIM:usize>(query:Query<(&Change<Pos<Num,DIM>>,&Stat<Vel<Num,DIM>>)>)
+pub fn apply_velocity<Num:RealField+Copy,const DIM:usize>(query:Query<(&Change<Pos<Num,DIM>>,&Stat<Vel<Num,DIM>>,&Stat<TimePass<Num>>)>)
 {
-    query.par_iter().for_each(|(value,delta)|{
-        value.add_change(Pos(delta.0.0));
+    query.par_iter().for_each(|(value,delta,time)|{
+        value.add_change(Pos(delta.0.0*time.0.0));
     });
 }
 

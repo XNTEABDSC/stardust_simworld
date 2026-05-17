@@ -290,14 +290,27 @@ pub fn calculate_density_plugin<Num:RealField+Copy>(app:&mut App){
 	app.add_systems(schedule_pre_sim(), to_calculate_stat_system_with_processing(calculate_density::<Num>));
 
 }
-
+#[derive(Debug,Clone, Copy)]
 pub struct CalculateSystemsPlugins<Num,const DIM:usize>(pub PhantomData<[Num;DIM]>)
 where
 	Num:RealField+Copy,
-	Const<DIM>: DimNameToSoDimName + DimName,
+	Const<DIM>: DimNameToSoDimName + DimName + DimMin<Const<DIM>, Output = Const<DIM>>,
 	DefaultAllocator: Allocator<DimNameToSoDimNameType<DIM>, DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>+Allocator<DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>,
     DimNameToSoDimNameType<DIM>:
         DimMin<DimNameToSoDimNameType<DIM>, Output = DimNameToSoDimNameType<DIM>>,;
+
+impl<Num,const DIM:usize> Default for CalculateSystemsPlugins<Num,DIM>
+where
+	Num:RealField+Copy,
+	Const<DIM>: DimNameToSoDimName + DimName + DimMin<Const<DIM>, Output = Const<DIM>>,
+	DefaultAllocator: Allocator<DimNameToSoDimNameType<DIM>, DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>+Allocator<DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>,
+    DimNameToSoDimNameType<DIM>:
+        DimMin<DimNameToSoDimNameType<DIM>, Output = DimNameToSoDimNameType<DIM>>
+{
+	fn default() -> Self {
+		Self(Default::default())
+	}
+}
 
 impl<Num,const DIM:usize> PluginGroup for CalculateSystemsPlugins<Num,DIM> 
 where
@@ -306,11 +319,11 @@ where
 	DefaultAllocator: Allocator<DimNameToSoDimNameType<DIM>, DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>+Allocator<DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>,
     DimNameToSoDimNameType<DIM>:
         DimMin<DimNameToSoDimNameType<DIM>, Output = DimNameToSoDimNameType<DIM>>,
-
 {
 	fn build(self) -> PluginGroupBuilder {
 		// let dwa:fn(&mut App)=calculate_position_state_plugin::<Num,DIM>;
-		let res=PluginGroupBuilder::start::<Self>()
+		let res=
+		PluginGroupBuilder::start::<Self>()
 			.add(calculate_position_state_plugin::<Num,DIM>)
 			.add(calculate_angular_state_plugin::<Num,DIM>)
 			.add(calculate_vel_var_plugin::<Num,DIM>)

@@ -6,7 +6,7 @@ use physics_basic::rotation::{DimNameToSoDimName, DimNameToSoDimNameType};
 use wacky_bag::math::normal_cdf::NormalCdfConsts;
 use wacky_bag_bevy::utils::plugin_add_systems::plugin_add_systems;
 
-use crate::{grid_gas::{interact_grid_gas_body::interact_grid_gas_body, resource::{GridGasResource, grid_gas_apply_changes_plugin}, spread::grid_gas_spread}, schedule::schedule_sim};
+use crate::{grid_gas::{interact_grid_gas_body::interact_grid_gas_body, resource::{GridGasResource, grid_gas_calculate_plugin}, spread::grid_gas_spread}, schedule::schedule_sim};
 
 pub mod edge_type;
 pub mod spread;
@@ -48,7 +48,7 @@ where
 	fn build(self) -> PluginGroupBuilder {
 		PluginGroupBuilder::start::<Self>()
 			.add(move |app: &mut App|{app.insert_resource(self.resource.clone());})
-			.add(grid_gas_apply_changes_plugin::<Num,DIM>)
+			.add(grid_gas_calculate_plugin::<Num,DIM>)
 			
 			.add(at_grid_gas::plugin::<Num,DIM>)
 			

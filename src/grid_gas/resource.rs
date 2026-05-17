@@ -1,14 +1,14 @@
 use std::ops::Add;
 
-use bevy::{app::App, ecs::{resource::Resource, system::ResMut}};
-use frunk::{Poly, ToMut, hlist::HMappable};
+use bevy::{app::App, ecs::{resource::Resource, schedule::IntoScheduleConfigs, system::ResMut}, log::{info, info_once}, reflect::Reflect};
+use frunk::{HCons, HList, HNil, Poly, ToMut, hlist::HMappable};
 use nalgebra::RealField;
 use statistic_physics::{formulas::{self, calculate_matters_state_inplace_m}, matters::{MattersBasic, MattersBasicStat, MattersFull}};
 use wacky_bag::{structures::n_dim_array::t_n_dim_array::TNDimArrayForEachParallel, utils::{h_list_helpers::HMapP, output_func::HMappableFrom}};
-use wacky_bag_bevy::utils::{stat_for_hlist::{HApplyChange, MapFromStatMut, MapToChange, MapToStat}, thread_scope::ComputeTaskPoolScopeCreater};
+use wacky_bag_bevy::{system::processing_system::ScheduleConfigsProcessing, utils::{stat_for_hlist::{HApplyChange, MapFromStatMut, MapToChange, MapToStat}, thread_scope::ComputeTaskPoolScopeCreater}};
 
 
-use crate::{grid::grid::GridResource, schedule::schedule_apply_change};
+use crate::{grid::grid::GridResource, schedule::{schedule_apply_change, schedule_pre_sim}};
 
 // use statistic_physics::matters::Matters;
 
@@ -31,11 +31,12 @@ pub fn grid_gas_datas<Num,const DIM:usize>(basics:MattersBasic<Num,DIM>)->GridGa
 
 
 
-#[derive(Resource,Clone)]
+#[derive(Resource,Clone,Reflect)]
 pub struct GridGasResource<Num,const DIM:usize>(pub GridResource<DIM,GridGasDatas<Num,DIM>>);
 
 pub fn grid_gas_apply_changes<Num:RealField+Copy,const DIM:usize>(mut grid_gas:ResMut<GridGasResource<Num,DIM>>){
 	grid_gas.0.for_each_mut_parallel(&|g,_|{
+		
 		let (changes,r)
 			:(<<MattersBasicStat::<Num,DIM> as HMappable<Poly<MapToChange>>>::Output as ToMut>::Output,_)
 			=g.to_mut().sculpt();
@@ -44,16 +45,29 @@ pub fn grid_gas_apply_changes<Num:RealField+Copy,const DIM:usize>(mut grid_gas:R
 			=r.sculpt();
 		changes.zip(stats).map(Poly(HApplyChange));
 		
+		// calculate_matters_state_inplace_m(
+		// 	HMappableFrom::output_map(
+		// 		g.to_mut().sculpt().0,
+		// 		Poly(MapFromStatMut)
+		// 	)
+		// );
+		
+	}, &ComputeTaskPoolScopeCreater);
+}
+
+pub fn grid_gas_calculate<Num:RealField+Copy,const DIM:usize>(mut grid_gas:ResMut<GridGasResource<Num,DIM>>){
+	grid_gas.0.for_each_mut_parallel(&|g,_|{
+		
 		calculate_matters_state_inplace_m(
 			HMappableFrom::output_map(
 				g.to_mut().sculpt().0,
 				Poly(MapFromStatMut)
 			)
 		);
-		
 	}, &ComputeTaskPoolScopeCreater);
 }
 
-pub fn grid_gas_apply_changes_plugin<Num:RealField+Copy,const DIM:usize>(app:&mut App){
+pub fn grid_gas_calculate_plugin<Num:RealField+Copy,const DIM:usize>(app:&mut App){
 	app.add_systems(schedule_apply_change(), grid_gas_apply_changes::<Num,DIM>);
+	app.add_systems(schedule_pre_sim(), grid_gas_calculate::<Num,DIM>.into_configs().config_processing::<HNil,HNil,HList!(GridGasResource<Num,DIM>)>());
 }

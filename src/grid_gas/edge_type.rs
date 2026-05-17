@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use bevy::{app::{PluginGroup, PluginGroupBuilder, Plugins}, ecs::resource::Resource};
+use bevy::{app::{PluginGroup, PluginGroupBuilder, Plugins}, ecs::resource::Resource, reflect::Reflect};
 use frunk::HList;
 use nalgebra::RealField;
 use physics_basic::stats::{Vel,Density};
@@ -58,7 +58,7 @@ impl<Num,const DIM:usize,Marker> PluginGroup for GridGasEdgeWall<Num,DIM,Marker>
 
 
 
-#[derive(Resource)]
+#[derive(Resource,Reflect)]
 pub struct GridGasEdgeConst<Num,const DIM:usize,Marker>
 	where Num:RealField+Copy+NormalCdfConsts<Marker>
 {

@@ -1,10 +1,10 @@
 
-use bevy::ecs::resource::Resource;
+use bevy::{ecs::resource::Resource, reflect::Reflect};
 use nalgebra::RealField;
 // use physics_basic::num::Num;
 
 
-#[derive(Resource,Clone)]
+#[derive(Resource,Clone,Reflect)]
 pub struct SimulateSpeed<Num>{
     pub second_per_frame:Num,
     pub frame_per_second:Num,

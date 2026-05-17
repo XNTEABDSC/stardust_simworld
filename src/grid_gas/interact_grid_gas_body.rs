@@ -37,7 +37,7 @@ where
 
 		let stats=HMappableFrom::output_map(gas_stats_c, Poly(MapFromStatRef));
 
-		let (gas_change,b_change)=interact_gas_cell_body_simple::<Num,DIM>(stats,b_stats_o,Num::from_f64(1.0).unwrap());
+		let (gas_change,b_change)=interact_gas_cell_body_simple::<Num,DIM>(stats,b_stats_o,Num::from_f64(0.01).unwrap());
 		
 		let gas_changes_c=gas_c_r.sculpt().0;
 

@@ -1,6 +1,6 @@
 use std::array;
 
-use bevy::{app::{App, FixedPostUpdate, FixedPreUpdate}, ecs::{entity::Entity, schedule::IntoScheduleConfigs, system::{ParallelCommands, Query, Res}}, log::warn};
+use bevy::{app::{App, FixedPostUpdate, FixedPreUpdate}, ecs::{entity::Entity, schedule::IntoScheduleConfigs, system::{ParallelCommands, Query, Res}}, log::warn, reflect::Reflect};
 use bevy_ecs_macros::Component;
 use frunk::{HList, HNil, Poly};
 use nalgebra::RealField;
@@ -11,7 +11,7 @@ use wacky_bag_bevy::{system::processing_system::ScheduleConfigsProcessing, utils
 use crate::{grid::at_grid::AtGridCell, grid_gas::resource::{GridGasDatas, GridGasResource}, schedule::{schedule_apply_change, schedule_pre_sim}};
 
 /// we simply copy [GridGasDatas] from grid to entity when [FixedPreUpdate], and put changes back when [FixedPostUpdate]
-#[derive(Component)]
+#[derive(Component,Reflect)]
 pub struct AtGridCellGas<Num,const DIM:usize>(pub GridGasDatas<Num,DIM>);
 
 pub fn set_at_grid_gas<Num:RealField+Copy,const DIM:usize>(mut q:Query<(Entity,&AtGridCell<DIM>,Option<&mut AtGridCellGas<Num,DIM>>)>,res:Res<GridGasResource<Num,DIM>>, p_cmd:ParallelCommands ){
@@ -56,7 +56,7 @@ pub fn apply_at_grid_gas_change<Num:RealField+Copy,const DIM: usize>(mut q:Query
 pub fn plugin<Num:RealField+Copy,const DIM:usize>(app:&mut App){
 	app.add_systems(schedule_pre_sim(), 
 		set_at_grid_gas::<Num,DIM>.into_configs()
-		.config_processing::<HList!(AtGridCell<DIM>),HNil,HList!(AtGridCellGas<Num,DIM>)>()
+		.config_processing::<HList!(AtGridCell<DIM>,GridGasResource<Num,DIM>),HNil,HList!(AtGridCellGas<Num,DIM>)>()
 	);
 	app.add_systems(schedule_apply_change(), apply_at_grid_gas_change::<Num,DIM>);
 }

@@ -2,10 +2,11 @@
 use std::str::FromStr;
 
 use bevy::ecs::system::Res;
-use bevy::log::info;
+use bevy::log::{info, info_once};
 use frunk::{Poly, hlist};
 use nalgebra::{RealField, SVector};
 use wacky_bag::math::normal_cdf::NormalCdfConsts;
+use wacky_bag::structures::n_dim_array::dim_dir::DimDirIter;
 use wacky_bag::utils::num_extend::NumExtends;
 use wacky_bag::{structures::n_dim_array::{dim_dir::DimDir, t_n_dim_array::{TNDimArrayForEachEdgeParallel, TNDimArrayIterPairParallel}}, utils::{h_list_helpers::MapNeg, output_func::HMappableFrom, select_zip::HSelectZippable}};
 use wacky_bag_bevy::utils::{stat_for_hlist::{HAddChange, HChangeTransfer, MapFromStatRef, Select2ChangeRef, SelectChangeRef}, thread_scope::ComputeTaskPoolScopeCreater};
@@ -57,43 +58,42 @@ pub fn grid_gas_spread_plugin<Num:RealField+Copy+NormalCdfConsts<Marker>,const D
 }
 
 pub fn grid_gas_spread_edge_wall<Num:RealField+Copy+NormalCdfConsts<Marker>,const DIM:usize,Marker:Send+Sync+'static>(grid_gas:Res<GridGasResource<Num,DIM>>,simulate_speed:Res<SimulateSpeed<Num>>,grid_size:Res<GridData<Num,DIM>>,_res_gas_grid_edge_wall:Res<GridGasEdgeWall<Num,DIM,Marker>>) {
-	
+
 	let dt=simulate_speed.second_per_frame;
 	let edge_len:Num=grid_size.grid_edge_len;
 
-	for dim in 0..DIM {
-		for dir in 0..=1 {
+	for dim_dir in DimDirIter::new(DIM) {
 
-			let dim_dir=DimDir{dim,dir_positive: (dir as i32).is_positive()};
-			let dir_vec=dim_dir.to_dir_vec().map(|a|Num::from_isize(a).unwrap()).into();
+		let dim=dim_dir.dim;
 
-			grid_gas.0.for_each_edge_parallel(dim_dir, &|a,_|{
+		let dir_vec=dim_dir.to_dir_vec().map(|a|Num::from_isize(a).unwrap()).into();
 
-				let r=formulas::gas_cell_spread_to_side(
-					HMappableFrom::output_map(
-						a
-						.to_ref()
-						.sculpt().0,
-						Poly(MapFromStatRef)
-					)
-					, dir_vec, edge_len, dt);
+		grid_gas.0.for_each_edge_parallel(dim_dir, &|a,_|{
+			
+			let r=formulas::gas_cell_spread_to_side(
+				HMappableFrom::output_map(
+					a
+					.to_ref()
+					.sculpt().0,
+					Poly(MapFromStatRef)
+				)
+				, dir_vec, edge_len, dt);
 
-				let mut m:Momentum<Num,DIM>=r.pluck().0;
+			let mut m:Momentum<Num,DIM>=r.pluck().0;
 
-				for i in 0..DIM {
-					m.0[dim] = if i==dim {
-						-m.0[dim]*Num::p2()
-					} else {
-						Num::zero()
-					}
+			for i in 0..DIM {
+				m.0[dim] = if i==dim {
+					-m.0[dim]*Num::p2()
+				} else {
+					Num::zero()
 				}
-
-				(hlist![m]).select_zip(Poly(SelectChangeRef::default()), a.to_ref().sculpt().0)
-				.map(Poly(HAddChange));
-
 			}
-			, &ComputeTaskPoolScopeCreater);
+
+			(hlist![m]).select_zip(Poly(SelectChangeRef::default()), a.to_ref().sculpt().0)
+			.map(Poly(HAddChange));
+
 		}
+		, &ComputeTaskPoolScopeCreater);
 	}
 
 	// grid_gas.0.iter_pair_parallel(&|a,b,i|{
