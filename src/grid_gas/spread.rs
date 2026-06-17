@@ -58,30 +58,32 @@ pub fn grid_gas_spread_plugin<Num:RealField+Copy+NormalCdfConsts<Marker>,const D
 pub fn grid_gas_spread_edge_wall<Num:RealField+Copy+NormalCdfConsts<Marker>,const DIM:usize,Marker:Send+Sync+'static>(grid_gas:Res<GridGasResource<Num,DIM>>,simulate_speed:Res<SimulateSpeed<Num>>,grid_size:Res<GridData<Num,DIM>>,_res_gas_grid_edge_wall:Res<GridGasEdgeWall<Num,DIM,Marker>>) {
 
 	let dt=simulate_speed.second_per_frame;
-	let edge_len:Num=grid_size.grid_edge_len;
+	let edge_area:Num=grid_size.grid_edge_len;
+
 
 	for dim_dir in DimDirIter::new(DIM) {
 
 		let dim=dim_dir.dim;
 
 		let dir_vec=dim_dir.to_dir_vec().map(|a|Num::from_isize(a).unwrap()).into();
+		grid_gas.0.for_each_edge_parallel(dim_dir, &|a,_pos|{
 
-		grid_gas.0.for_each_edge_parallel(dim_dir, &|a,_|{
-			
-			let r=formulas::gas_cell_spread_to_side(
-				HMappableFrom::output_map(
+			let a_param=HMappableFrom::output_map(
 					a
 					.to_ref()
 					.sculpt().0,
 					Poly(MapFromStatRef)
-				)
-				, dir_vec, edge_len, dt);
-
+				);
+			// bevy::log::info!("awdawdawd");
+			let r=formulas::gas_cell_spread_to_side(
+				a_param
+				, dir_vec, edge_area, dt);
+			
 			let mut m:Momentum<Num,DIM>=r.pluck().0;
 
 			for i in 0..DIM {
-				m.0[dim] = if i==dim {
-					-m.0[dim]*Num::p2()
+				m.0[i] = if i==dim {
+					-m.0[i]*Num::p2()
 				} else {
 					Num::zero()
 				}

@@ -1,15 +1,15 @@
 use std::{marker::PhantomData};
 
-use bevy::{app::{App, PluginGroup, PluginGroupBuilder}, ecs::{query::{QueryData, ReadOnlyQueryData}, schedule::{IntoScheduleConfigs, ScheduleConfigs}, system::{IntoSystem, Query, ScheduleSystem}}, prelude::SystemParamFunction};
-use frunk::{HNil, Poly , hlist::{HFoldLeftable, HMappable, HZippable}};
+use bevy::{app::{App, PluginGroup, PluginGroupBuilder}, ecs::{query::{QueryData, ReadOnlyQueryData, With}, schedule::{IntoScheduleConfigs, ScheduleConfigs}, system::{IntoSystem, Query, ScheduleSystem}}, prelude::SystemParamFunction};
+use frunk::{HCons, HNil, Poly, hlist::{HFoldLeftable, HMappable, HZippable}};
 use nalgebra::{Const, DefaultAllocator, DimMin, DimName, RealField, allocator::Allocator};
 use physics_basic::{body::{calculate_angular_state, calculate_position_state}, rotation::{DimNameToSoDimName, DimNameToSoDimNameType}};
 use statistic_physics::formulas::{calculate_density, calculate_vel_var};
-use wacky_bag::utils::{default_of::default, h_list_helpers::{HMapP, HTypeFnToMapper, HZip, MapFromRef, MapMut, MapRef, MapToPhantom}, type_fn::{ChainFunc, ReverseFunc}};
-use wacky_bag_bevy::{stat_component::determining_apply_changes::MapToDeterminingApplyChanges2Plugin, system::{multi_sets::{FoldScheduleConfigsAfterSets, FoldScheduleConfigsBeforeSets}, processing_system::{MapToProcessingSystemSet, ScheduleConfigsProcessing}}, utils::{fold_plugin_group_add::FoldPluginGroupBuilderAdd, h_list_query::{HToQuery, HToQueryType}, stat_for_hlist::{HChangeAdd, HStatSet, MapFromStatRef, MapToChange, MapToStat}}};
+use wacky_bag::{structures::owned::Owned, utils::{default_of::default, h_list_helpers::{FoldVecPush, HMapP, HRepeat, HTypeFnToMapper, HTypeMapP, HZip, MapFromRef, MapMut, MapRef, MapToPhantom, h_repeat}, type_fn::{ChainFunc, ReverseFunc, TypeFnAsPhantomFn}}};
+use wacky_bag_bevy::{stat_component::{determining::Determining, stat_apply_change::StatChangeToApplyChanges}, system::{multi_sets::{FoldScheduleConfigsAfterSets, FoldScheduleConfigsBeforeSets, FoldScheduleConfigsInSet}, processing_system::{MapToProcessingSystemSet, ScheduleConfigsProcessing}}, utils::{fold_plugin_group_add::FoldPluginGroupBuilderAdd, h_list_query::{HToQuery, HToQueryType}, stat_for_hlist::{HChangeAdd, HStatSet, MapFromStatRef, MapToChange, MapToDetermining, MapToStat, MapToWith}}};
 
 
-use crate::{physics::bundle::PhyBodyStatisticBundleDetermining, schedule::schedule_pre_sim};
+use crate::{physics::bundle::PhyBodyStatisticBundleDetermining, schedule::{schedule_apply_change, schedule_pre_sim}};
 
 /// use [to_calculate_system] for system instead for type system to find marker
 #[derive(Debug,Default,Clone, Copy)]
@@ -327,12 +327,42 @@ where
 			.add(calculate_angular_state_plugin::<Num,DIM>)
 			.add(calculate_vel_var_plugin::<Num,DIM>)
 			.add(calculate_density_plugin::<Num>)
+			.add(spawn_stat_apply_change_system_plugin::<Num,DIM>)
 		;
-		let fns=
-			default::<HMapP<HZip<PhyBodyStatisticBundleDetermining<Num,DIM>,_>,MapToPhantom>>()
-			.map(Poly(MapToDeterminingApplyChanges2Plugin));
-		let res=fns.foldl(Poly(FoldPluginGroupBuilderAdd), res);
+		
 		res
 	}
 }
 
+pub fn spawn_stat_apply_change_system_plugin<Num,const DIM:usize>(app:&mut App)
+where 
+	Num:RealField+Copy,
+	Const<DIM>: DimNameToSoDimName + DimName + DimMin<Const<DIM>, Output = Const<DIM>>,
+	DefaultAllocator: Allocator<DimNameToSoDimNameType<DIM>, DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>+Allocator<DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>,
+    DimNameToSoDimNameType<DIM>:
+        DimMin<DimNameToSoDimNameType<DIM>, Output = DimNameToSoDimNameType<DIM>>,
+{
+	let cfgsh=
+	default::<
+	HMapP<
+		HZip<
+		HZip<
+			PhyBodyStatisticBundleDetermining<Num,DIM>,
+			_>,
+			HTypeMapP<PhyBodyStatisticBundleDetermining<Num,DIM>,TypeFnAsPhantomFn<ChainFunc<MapToDetermining,MapToWith>>>
+		>,
+		MapToPhantom>
+	>()
+	.map(Poly(StatChangeToApplyChanges));
+
+	let cfgsh=
+	cfgsh.zip( 
+		default::<HMapP< HMapP<PhyBodyStatisticBundleDetermining<Num,DIM>,MapToDetermining>,MapToProcessingSystemSet>>() )
+	.map(
+		Poly(FoldScheduleConfigsInSet)
+	);
+	let Owned(cfgs)=cfgsh.foldl(Poly(FoldVecPush), Owned(Vec::<ScheduleConfigs<ScheduleSystem>>::new()));
+	let cfg= ScheduleConfigs::Configs { configs: cfgs, collective_conditions:default(),metadata:default() };
+	
+	app.add_systems(schedule_apply_change(), cfg);
+}

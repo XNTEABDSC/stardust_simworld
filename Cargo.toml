@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 
-bevy = { version = "0.18.1", features = ["dynamic_linking"] }
+bevy = { version = "0.18.1" }
 fixed = "1.29.0"
 cordic = "0.1.5"
 wacky_bag = {path="../../repos/wacky_bag"}
@@ -20,9 +20,11 @@ derive_more = {version = "2.0.1",features = ["add","add_assign","not","deref","d
 wacky_bag_bevy = {path="../../repos/wacky_bag_bevy"}
 nalgebra = "0.34.0"
 bevy_ecs_macros = "0.18.1"
+num-traits = "0.2.19"
 # ambassador = "0.4.1"
 simba = "0.9.1"
 name_type_for_fn = {path = "../../repos/name_type_for_fn"}
+dashmap = "6.2.1"
 
 [target.x86_64-pc-windows-msvc]
 linker = "rust-lld.exe"

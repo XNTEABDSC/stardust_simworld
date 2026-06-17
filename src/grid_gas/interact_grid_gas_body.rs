@@ -1,12 +1,13 @@
-use bevy::ecs::system::Query;
+use bevy::ecs::system::{Query, Res};
 use frunk::Poly;
+use log::info;
 use nalgebra::{Const, DefaultAllocator, DimName, RealField, allocator::Allocator};
 use physics_basic::rotation::{DimNameToSoDimName, DimNameToSoDimNameType};
 use statistic_physics::formulas::{InteractGasCellBodyBodyChange, InteractGasCellBodyBodyMatters, interact_gas_cell_body_simple};
 use wacky_bag::utils::{h_list_helpers::{HMapP, HToRef, MapRef, Sum}, output_func::HMappableFrom, select_zip::HSelectZippable, type_fn::ChainFunc};
 use wacky_bag_bevy::utils::{h_list_query_data_old::HQueryData, stat_for_hlist::{HChangeAdd, MapFromStatRef, MapToChange, MapToStat}};
 
-use crate::grid_gas::at_grid_gas::AtGridCellGas;
+use crate::{grid_gas::at_grid_gas::AtGridCellGas, simulate_speed::simulate_speed::SimulateSpeed};
 
 
 pub fn interact_grid_gas_body<Num,const DIM:usize>(q:Query<(&AtGridCellGas<Num,DIM>, HQueryData< 
@@ -16,7 +17,8 @@ pub fn interact_grid_gas_body<Num,const DIM:usize>(q:Query<(&AtGridCellGas<Num,D
 			HMapP<InteractGasCellBodyBodyChange<Num,DIM>,MapToChange>
 		>
 	> 
-	>)>
+	>)>,
+	time:Res<SimulateSpeed<Num>>
 )
 where 
 	Num:RealField+Copy,
@@ -25,6 +27,9 @@ where
 		Allocator<DimNameToSoDimNameType<DIM>>
         + Allocator<DimNameToSoDimNameType<DIM>, DimNameToSoDimNameType<DIM>, Buffer<Num>:Send+Sync >,
 {
+
+	let dt=time.second_per_frame;
+	
 	q.par_iter().for_each(|(gas_c,b_stats)|{
 
 		let gas=gas_c.0.to_ref();
@@ -37,11 +42,13 @@ where
 
 		let stats=HMappableFrom::output_map(gas_stats_c, Poly(MapFromStatRef));
 
-		let (gas_change,b_change)=interact_gas_cell_body_simple::<Num,DIM>(stats,b_stats_o,Num::from_f64(0.01).unwrap());
+		let (gas_change,b_change)=interact_gas_cell_body_simple::<Num,DIM>(stats,b_stats_o,Num::from_f64(0.1).unwrap(),dt);
 		
 		let gas_changes_c=gas_c_r.sculpt().0;
 
 		b_change.zip(b_change_c).map(Poly(HChangeAdd));
+
+		// info!("{gas_change:.3?}");
 
 		gas_change.select_zip(
 			Poly(ChainFunc(MapToChange,MapRef::default())), 

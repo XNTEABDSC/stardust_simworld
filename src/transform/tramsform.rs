@@ -36,7 +36,9 @@ pub fn vec_2_num_to_vec_3_f32<Num:RealField,S:Storage<Num,Const<2>,Const<1>>>(v:
 }
 
 pub fn world_pos_to_transform_2d<Num:RealField+Copy>(mut q:Query<(&Stat<Pos<Num,2>>, &Stat<Vel<Num,2>>, &mut Transform, &Stat<TimePass<Num>>)>,fixed_time:Res<Time<Fixed>>,len_trans:Res<WldLengthToScreenLength>){
-	let time_perc=fixed_time.delta_secs()/fixed_time.timestep().as_secs_f32();
+	let time_perc=
+	fixed_time.overstep_fraction();
+	//fixed_time.delta_secs()/fixed_time.timestep().as_secs_f32();
 	q.par_iter_mut().for_each(|(q,v,mut trans,dt_per_frame)|{
 		let dt=<Num as SupersetOf<f32>>::to_subset(&dt_per_frame.0.0).unwrap()*time_perc;
 		let pos_v=vec_2_num_to_vec_3_f32(&q.0.0);
@@ -47,7 +49,9 @@ pub fn world_pos_to_transform_2d<Num:RealField+Copy>(mut q:Query<(&Stat<Pos<Num,
 
 
 pub fn world_pos_to_transform_3d<Num:RealField+Copy>(mut q:Query<(&Stat<Pos<Num,3>>, &Stat<Vel<Num,3>>, &mut Transform, &Stat<TimePass<Num>>)>,fixed_time:Res<Time<Fixed>>,len_trans:Res<WldLengthToScreenLength>){
-	let time_perc=fixed_time.delta_secs()/fixed_time.timestep().as_secs_f32();
+	let time_perc=
+	fixed_time.overstep_fraction();
+	//fixed_time.delta_secs()/fixed_time.timestep().as_secs_f32();
 	q.par_iter_mut().for_each(|(q,v,mut trans,dt_per_frame)|{
 		let dt=<Num as SupersetOf<f32>>::to_subset(&dt_per_frame.0.0).unwrap()*time_perc;
 		let pos_v=vec_3_num_to_f32(&q.0.0);
@@ -65,7 +69,9 @@ pub fn mat_3_num_to_f32<Num:RealField,S:Storage<Num,Const<3>,Const<3>>>(mat:Matr
 }
 
 pub fn world_rot_to_transform_3d<Num:RealField+Copy>(mut q:Query<(&Stat<Rotation<Num,3>>, &Stat<AngularVel<Num,3>>, &mut Transform, &Stat<TimePass<Num>>)>, fixed_time:Res<Time<Fixed>>){
-	let time_perc=fixed_time.delta_secs()/fixed_time.timestep().as_secs_f32();
+	let time_perc=
+	fixed_time.overstep_fraction();
+	//fixed_time.delta_secs()/fixed_time.timestep().as_secs_f32();
 	q.par_iter_mut().for_each(|(r,agv,mut trans,dt_per_frame)|{
 		let dt=<Num as SupersetOf<f32>>::to_subset(&dt_per_frame.0.0).unwrap()*time_perc;
 		let final_rotation_mat_num=r.0.0*physics_basic::rotation::angular_vel_to_rotation(agv,Num::from_subset(&dt));
@@ -75,7 +81,9 @@ pub fn world_rot_to_transform_3d<Num:RealField+Copy>(mut q:Query<(&Stat<Rotation
 }
 
 pub fn world_rot_to_transform_2d<Num:RealField+Copy>(mut q:Query<(&Stat<Rotation<Num,2>>, &Stat<AngularVel<Num,2>>, &mut Transform, &Stat<TimePass<Num>>)>, fixed_time:Res<Time<Fixed>>){
-	let time_perc=fixed_time.delta_secs()/fixed_time.timestep().as_secs_f32();
+	let time_perc=
+	fixed_time.overstep_fraction();
+	//fixed_time.delta_secs()/fixed_time.timestep().as_secs_f32();
 	q.par_iter_mut().for_each(|(r,agv,mut trans,dt_per_frame)|{
 		let dt=<Num as SupersetOf<f32>>::to_subset(&dt_per_frame.0.0).unwrap()*time_perc;
 		let final_rotation_mat_num=r.0.0*physics_basic::rotation::angular_vel_to_rotation(agv,Num::from_subset(&dt));

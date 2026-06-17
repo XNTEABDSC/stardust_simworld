@@ -1,5 +1,5 @@
-#![feature(const_trait_impl)]
-#![feature(const_convert)]
+// #![feature(const_trait_impl)]
+// #![feature(const_convert)]
 
 // pub mod components;
 // pub mod systems;
@@ -14,3 +14,9 @@ pub mod utils;
 pub mod schedule;
 pub mod basics;
 pub mod physics;
+pub mod multi_body;
+
+
+fn dwa(){
+	
+}

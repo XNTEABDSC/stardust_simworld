@@ -28,7 +28,8 @@ pub fn apply_angular_velocity<Num:RealField+Copy,const DIM:usize>(q:Query<
 where Const<DIM>: DimMin<Const<DIM>,Output = Const<DIM>>
 {
 	q.par_iter().for_each(|(r,agv,t)|{
-		let to_mul=angular_vel_to_rotation(agv,t.0.0);
+		// let to_mul=angular_vel_to_rotation(agv,t.0.0);
+		let to_mul=agv.0.0*t.0.0;
 		r.add_change(RotationDelta(to_mul));
 	});
 }
