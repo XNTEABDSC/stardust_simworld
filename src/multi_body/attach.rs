@@ -1,4 +1,6 @@
-use bevy::ecs::{entity::Entity, lifecycle::HookContext, relationship::{Relationship, RelationshipTarget}, world::DeferredWorld};
+use std::marker::PhantomData;
+
+use bevy::{ecs::{entity::Entity, lifecycle::HookContext, relationship::{Relationship, RelationshipTarget}, world::DeferredWorld}, utils::default};
 use bevy_ecs_macros::Component;
 
 
@@ -6,10 +8,6 @@ use bevy_ecs_macros::Component;
 pub struct AttachTo{
 	target:Entity,
 	// pub(super) level:Option<usize>,
-}
-
-pub struct AttachLevel{
-	pub level:usize
 }
 
 #[derive(Debug,Component)]
@@ -29,7 +27,7 @@ impl AttachTo {
 	// }
 }
 
-impl Relationship for AttachTo 
+impl Relationship for AttachTo
 {
 	type RelationshipTarget=AttachedEntities;
 
@@ -54,7 +52,7 @@ impl Relationship for AttachTo
 	// }
 }
 
-impl RelationshipTarget for AttachedEntities {
+impl RelationshipTarget for AttachedEntities{
 	const LINKED_SPAWN: bool=true;
 
 	type Relationship=AttachTo;

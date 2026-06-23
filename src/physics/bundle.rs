@@ -2,7 +2,7 @@ use bevy::{ecs::bundle::Bundle, utils::default};
 use frunk::{HList, Poly, hlist,hlist::Plucker, hlist_pat};
 use nalgebra::{Const, DefaultAllocator, DimMin, DimName, RealField, allocator::Allocator};
 use physics_basic::{body::{PhyBodyBasic, PhyBodyBasicStat, ShapeSphere, calculate_angular_state, calculate_body_state_full, calculate_position_state}, rotation::{DimNameToSoDimName, DimNameToSoDimNameType}, stat_to_change_type::{HMapStatToChangeTypeZ, MapStatToChangeTypeZ}};
-use wacky_bag::utils::{h_list_helpers::{HMapP, HZip, MapToPhantom}, type_fn::MapPhantomType};
+use wacky_bag_hlist::{h_list_helpers::{HMapP, HZip, MapToPhantom}, type_fn::MapPhantomType};
 use wacky_bag_bevy::utils::stat_for_hlist::{MapToChange, MapToDetermining, MapToStat};
 use physics_basic::stats::*;
 use physics_basic::rotation::*;

@@ -4,7 +4,8 @@ use bevy_ecs_macros::Component;
 use frunk::{HList, HNil, Poly};
 use nalgebra::RealField;
 use statistic_physics::matters::MattersBasicStat;
-use wacky_bag::{structures::n_dim_array::t_n_dim_array::TNDimArray, utils::h_list_helpers::{HMapP, HToMut, HToRef}};
+use wacky_bag::{structures::n_dim_array::t_n_dim_array::TNDimArray};
+use wacky_bag_hlist::h_list_helpers::{HMapP, HToMut, HToRef};
 use wacky_bag_bevy::{system::processing_system::ScheduleConfigsProcessing, utils::stat_for_hlist::{HChangeApplyChange, HChangeGetAndReset, MapTakeStatChange, MapToChange}};
 
 use crate::{grid::at_grid::AtGridCell, grid_gas::resource::{GridGasDatas, GridGasResource}, schedule::{schedule_apply_change, schedule_pre_sim}};

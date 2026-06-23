@@ -6,7 +6,10 @@ use nalgebra::RealField;
 use wacky_bag::math::normal_cdf::NormalCdfConsts;
 use wacky_bag::structures::n_dim_array::dim_dir::DimDirIter;
 use wacky_bag::utils::num_extend::NumExtends;
-use wacky_bag::{structures::n_dim_array::{dim_dir::DimDir, t_n_dim_array::{TNDimArrayForEachEdgeParallel, TNDimArrayIterPairParallel}}, utils::{h_list_helpers::MapNeg, output_func::HMappableFrom, select_zip::HSelectZippable}};
+use wacky_bag::{structures::n_dim_array::{dim_dir::DimDir, t_n_dim_array::{TNDimArrayForEachEdgeParallel, TNDimArrayIterPairParallel}}};
+
+use wacky_bag_hlist::select_zip::HSelectZippable;
+use wacky_bag_hlist::{h_list_helpers::MapNeg, output_map::HMappableFrom};
 use wacky_bag_bevy::utils::{stat_for_hlist::{HAddChange, HChangeTransfer, MapFromStatRef, Select2ChangeRef, SelectChangeRef}, thread_scope::ComputeTaskPoolScopeCreater};
 
 
@@ -48,6 +51,8 @@ pub fn grid_gas_spread<Num:RealField+Copy+NormalCdfConsts<Marker>,const DIM:usiz
 		// .select_zip(Poly(SelectChangeRef::default()), a.to_ref().sculpt().0)
 		// .map(Poly(HAddChange));
 		r.select_zip(Poly(Select2ChangeRef::default()), a.to_ref().zip(b.to_ref()).sculpt().0).map(Poly(HChangeTransfer));
+		// r.zip(a.to_ref().zip(b.to_ref()).sculpt::<_,_>().0).map(Poly(HChangeTransfer));
+		
 	}, &ComputeTaskPoolScopeCreater);
 }
 

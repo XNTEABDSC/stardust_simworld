@@ -4,7 +4,7 @@ use log::info;
 use nalgebra::{Const, DefaultAllocator, DimName, RealField, allocator::Allocator};
 use physics_basic::rotation::{DimNameToSoDimName, DimNameToSoDimNameType};
 use statistic_physics::formulas::{InteractGasCellBodyBodyChange, InteractGasCellBodyBodyMatters, interact_gas_cell_body_simple};
-use wacky_bag::utils::{h_list_helpers::{HMapP, HToRef, MapRef, Sum}, output_func::HMappableFrom, select_zip::HSelectZippable, type_fn::ChainFunc};
+use wacky_bag_hlist::{h_list_helpers::{HMapP, HToRef, MapRef, Sum}, output_map::HMappableFrom, chain_fn::ChainFunc};
 use wacky_bag_bevy::utils::{h_list_query_data_old::HQueryData, stat_for_hlist::{HChangeAdd, MapFromStatRef, MapToChange, MapToStat}};
 
 use crate::{grid_gas::at_grid_gas::AtGridCellGas, simulate_speed::simulate_speed::SimulateSpeed};
@@ -50,10 +50,12 @@ where
 
 		// info!("{gas_change:.3?}");
 
-		gas_change.select_zip(
-			Poly(ChainFunc(MapToChange,MapRef::default())), 
-			gas_changes_c
-		).map(Poly(HChangeAdd));
+		// gas_change.select_zip(
+		// 	Poly(ChainFunc(MapToChange,MapRef::default())), 
+		// 	gas_changes_c
+		// ).map(Poly(HChangeAdd));
+		gas_change.zip(gas_changes_c)
+		.map(Poly(HChangeAdd));
 
 	});
 }

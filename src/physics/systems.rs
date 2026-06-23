@@ -1,15 +1,16 @@
 use std::{marker::PhantomData};
 
-use bevy::{app::{App, PluginGroup, PluginGroupBuilder}, ecs::{query::{QueryData, ReadOnlyQueryData, With}, schedule::{IntoScheduleConfigs, ScheduleConfigs}, system::{IntoSystem, Query, ScheduleSystem}}, prelude::SystemParamFunction};
-use frunk::{HCons, HNil, Poly, hlist::{HFoldLeftable, HMappable, HZippable}};
+use bevy::{app::{App, PluginGroup, PluginGroupBuilder}, ecs::{query::{QueryData, ReadOnlyQueryData}, schedule::{IntoScheduleConfigs, ScheduleConfigs}, system::{Query, ScheduleSystem}}, prelude::SystemParamFunction};
+use frunk::{HNil, Poly, hlist::{HFoldLeftable, HMappable, HZippable}};
 use nalgebra::{Const, DefaultAllocator, DimMin, DimName, RealField, allocator::Allocator};
 use physics_basic::{body::{calculate_angular_state, calculate_position_state}, rotation::{DimNameToSoDimName, DimNameToSoDimNameType}};
 use statistic_physics::formulas::{calculate_density, calculate_vel_var};
-use wacky_bag::{structures::owned::Owned, utils::{default_of::default, h_list_helpers::{FoldVecPush, HMapP, HRepeat, HTypeFnToMapper, HTypeMapP, HZip, MapFromRef, MapMut, MapRef, MapToPhantom, h_repeat}, type_fn::{ChainFunc, ReverseFunc, TypeFnAsPhantomFn}}};
-use wacky_bag_bevy::{stat_component::{determining::Determining, stat_apply_change::StatChangeToApplyChanges}, system::{multi_sets::{FoldScheduleConfigsAfterSets, FoldScheduleConfigsBeforeSets, FoldScheduleConfigsInSet}, processing_system::{MapToProcessingSystemSet, ScheduleConfigsProcessing}}, utils::{fold_plugin_group_add::FoldPluginGroupBuilderAdd, h_list_query::{HToQuery, HToQueryType}, stat_for_hlist::{HChangeAdd, HStatSet, MapFromStatRef, MapToChange, MapToDetermining, MapToStat, MapToWith}}};
+use wacky_bag_hlist::{h_list_helpers::{FoldVecPush, HMapP, HTypeFnToMapper, HTypeMapP, HZip, MapFromRef, MapMut, MapRef, MapToPhantom}, type_fn::{ReverseFunc, TypeFnAsPhantomFn}, chain_fn::ChainFunc};
+use wacky_bag::{structures::owned::Owned, utils::{default_of::default, }};
+use wacky_bag_bevy::{stat_component::stat_apply_change::StatChangeToApplyChanges, system::{multi_sets::{FoldScheduleConfigsAfterSets, FoldScheduleConfigsBeforeSets, FoldScheduleConfigsInSet}, processing_system::{MapToProcessingSystemSet, ScheduleConfigsProcessing}}, utils::{h_list_query::{HToQuery, HToQueryType}, stat_for_hlist::{HChangeAdd, HStatSet, MapFromStatRef, MapToChange, MapToDetermining, MapToStat, MapToWith}}};
 
 
-use crate::{physics::bundle::PhyBodyStatisticBundleDetermining, schedule::{schedule_apply_change, schedule_pre_sim}};
+use crate::{physics::bundle::PhyBodyStatisticBundleDetermining, schedule::schedule_apply_change};
 
 /// use [to_calculate_system] for system instead for type system to find marker
 #[derive(Debug,Default,Clone, Copy)]
@@ -234,13 +235,7 @@ where
 
 #[cfg(test)]
 mod test{
-	use bevy::ecs::system::SystemParamFunction;
-	use frunk::{HCons, ToRef};
-	use physics_basic::stats::*;
 
-	use crate::physics;
-
-	use super::*;
 	
 }
 
@@ -267,7 +262,7 @@ mod test{
 // }
 
 pub fn calculate_position_state_plugin<Num:RealField+Copy,const DIM:usize>(app:&mut App){
-	app.add_systems(schedule_pre_sim(), to_calculate_stat_system_with_processing(calculate_position_state::<Num,DIM>));
+	app.add_systems(schedule_apply_change(), to_calculate_stat_system_with_processing(calculate_position_state::<Num,DIM>));
 }
 
 pub fn calculate_angular_state_plugin<Num,const DIM:usize>(app:&mut App)
@@ -278,15 +273,15 @@ where
     DimNameToSoDimNameType<DIM>:
         DimMin<DimNameToSoDimNameType<DIM>, Output = DimNameToSoDimNameType<DIM>>,
 {
-	app.add_systems(schedule_pre_sim(), to_calculate_stat_system_with_processing(calculate_angular_state::<Num,DIM>));
+	app.add_systems(schedule_apply_change(), to_calculate_stat_system_with_processing(calculate_angular_state::<Num,DIM>));
 }
 
 pub fn calculate_vel_var_plugin<Num:RealField+Copy,const DIM:usize>(app:&mut App){
-	app.add_systems(schedule_pre_sim(), to_calculate_stat_system_with_processing(calculate_vel_var::<Num,DIM>));
+	app.add_systems(schedule_apply_change(), to_calculate_stat_system_with_processing(calculate_vel_var::<Num,DIM>));
 }
 
 pub fn calculate_density_plugin<Num:RealField+Copy>(app:&mut App){
-	app.add_systems(schedule_pre_sim(), to_calculate_stat_system_with_processing(calculate_density::<Num>));
+	app.add_systems(schedule_apply_change(), to_calculate_stat_system_with_processing(calculate_density::<Num>));
 
 }
 #[derive(Debug,Clone, Copy)]
@@ -361,8 +356,19 @@ where
 	.map(
 		Poly(FoldScheduleConfigsInSet)
 	);
+
+	// cfgsh.zip(default::<HMapP<PhyBodyStatisticBundleDetermining<Num,DIM>,MapToPhantom>>()).map(
+	// 	impl_func_clause!(<T>:
+	// 		((ScheduleConfigs<ScheduleSystem>,PhantomData<T>))
+	// 		|(sys,a)|{
+
+	// 		}
+	// 	)
+	// );
+
 	let Owned(cfgs)=cfgsh.foldl(Poly(FoldVecPush), Owned(Vec::<ScheduleConfigs<ScheduleSystem>>::new()));
 	let cfg= ScheduleConfigs::Configs { configs: cfgs, collective_conditions:default(),metadata:default() };
 	
 	app.add_systems(schedule_apply_change(), cfg);
 }
+

@@ -23,6 +23,9 @@
 		},
 		{
 			"path": "../../repos/name_type_for_fn"
+		},
+		{
+			"path": "../../repos/wacky_bag_hlist"
 		}
 	],
 	"settings": {}

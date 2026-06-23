@@ -4,7 +4,8 @@ use bevy::{app::App, ecs::{resource::Resource, schedule::IntoScheduleConfigs, sy
 use frunk::{HList, HNil, Poly, ToMut, hlist::HMappable};
 use nalgebra::RealField;
 use statistic_physics::{formulas::{self, calculate_matters_state_inplace_m}, matters::{MattersBasic, MattersBasicStat, MattersFull}};
-use wacky_bag::{structures::n_dim_array::t_n_dim_array::TNDimArrayForEachParallel, utils::{h_list_helpers::HMapP, output_func::HMappableFrom}};
+use wacky_bag::{structures::n_dim_array::t_n_dim_array::TNDimArrayForEachParallel};
+use wacky_bag_hlist::{h_list_helpers::HMapP, output_map::HMappableFrom};
 use wacky_bag_bevy::{system::processing_system::ScheduleConfigsProcessing, utils::{stat_for_hlist::{HApplyChange, MapFromStatMut, MapToChange, MapToStat}, thread_scope::ComputeTaskPoolScopeCreater}};
 
 
