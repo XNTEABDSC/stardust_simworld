@@ -29,7 +29,7 @@ use crate::{multi_body::attach::AttachTo, physics::bundle::PhyBodyStatisticBundl
 // 	propagate_leaf_to_root::<PropagateChangeLeafToRoot<T>,AttachTo>(ps, update_sources_set, update_tasks);
 // }
 
-pub fn change_propagate_leaf_to_root_systen<T>()->ScheduleConfigs<ScheduleSystem>
+pub fn change_propagate_leaf_to_root_system_cfg<T>()->ScheduleConfigs<ScheduleSystem>
 where T:Send+Sync+AddAssign+'static+Zero{
 	propagate_leaf_to_root::<PropagateChangeLeafToRoot<T>,AttachTo>.into_configs()
 	.config_processing::<
@@ -54,12 +54,14 @@ where
 	let cfgsh=dwa.map(Poly(
 		impl_func_clause!(<T>{where T:Send+Sync+AddAssign+'static+Zero}:(PhantomData<T>)->(ScheduleConfigs<ScheduleSystem>)
 		|_a|{
-			change_propagate_leaf_to_root_systen::<T>()
+			change_propagate_leaf_to_root_system_cfg::<T>()
 		}
 	)
 	));
 	cfgsh.foldl(
-		Poly(impl_func_clause!(<'a>:((&'a mut App,ScheduleConfigs<ScheduleSystem>))->(&'a mut App) |(app,s)|{app.add_systems(schedule_apply_change(),s)})), 
+		Poly(impl_func_clause!(<'a>:((&'a mut App,ScheduleConfigs<ScheduleSystem>))->(&'a mut App) 
+			|(app,s)|{app.add_systems(schedule_apply_change(),s)}
+		)), 
 		app
 	);
 }
