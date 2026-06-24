@@ -1,11 +1,11 @@
-use bevy::ecs::{query::ROQueryItem, schedule::{IntoScheduleConfigs, ScheduleConfigs}, system::{ScheduleSystem, System}};
+use bevy::{app::App, ecs::{query::ROQueryItem, schedule::{IntoScheduleConfigs, ScheduleConfigs}, system::{ScheduleSystem, System}}};
 use bevy_ecs_macros::Component;
 use frunk::HList;
 use nalgebra::RealField;
 use physics_basic::{rotation::Rotation, stats::Pos};
-use wacky_bag_bevy::{stat_component::{cache_set::CacheSet, determining::Determining, stat::Stat}, system::{processing_system::ScheduleConfigsProcessing, propagate_relationship::{PropagateRootToLeaf, propagate_root_to_leaf}}};
+use wacky_bag_bevy::{stat_component::{cache_set::{CacheSet, set_cache_set_system, set_cache_set_system_cfg}, determining::Determining, stat::Stat}, system::{processing_system::{ProcessingSystemSet, ScheduleConfigsProcessing}, propagate_relationship::{PropagateRootToLeaf, propagate_root_to_leaf}}};
 
-use crate::multi_body::attach::AttachTo;
+use crate::{multi_body::attach::AttachTo, schedule::schedule_apply_change};
 
 #[derive(Debug,Component)]
 pub struct AttachToPos<Num,const DIM:usize>(pub Pos<Num,DIM>);
@@ -66,4 +66,14 @@ pub fn propagate_position_rotation_system<Num:RealField+Copy,const DIM:usize>()-
 		HList!(PropagatePositionRotation<Num,DIM>),
 		HList!(CacheSet<Stat<Pos<Num,DIM>>>,CacheSet<Stat<Rotation<Num,DIM>>>)
 	>()
+}
+
+pub fn propagate_position_rotation_plugin<Num:RealField+Copy,const DIM:usize>(app:&mut App) {
+	app.add_systems(schedule_apply_change(), propagate_position_rotation_system::<Num,DIM>());
+	app.add_systems(schedule_apply_change(), 
+		(
+			set_cache_set_system_cfg::<Stat<Pos<Num,DIM>>,()>(),
+			set_cache_set_system_cfg::<Stat<Rotation<Num,DIM>>,()>()
+		)
+	);
 }
