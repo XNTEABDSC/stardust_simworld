@@ -3,16 +3,16 @@ use std::{marker::PhantomData};
 use bevy::{app::{App, PluginGroup, PluginGroupBuilder}, ecs::{query::{QueryData, ReadOnlyQueryData}, schedule::{IntoScheduleConfigs, ScheduleConfigs}, system::{Query, ScheduleSystem}}, prelude::SystemParamFunction};
 use frunk::{HNil, Poly, hlist::{HFoldLeftable, HMappable, HZippable}};
 use nalgebra::{Const, DefaultAllocator, DimMin, DimName, RealField, allocator::Allocator};
-use physics_basic::{body::{calculate_angular_state, calculate_position_state}, rotation::{DimNameToSoDimName, DimNameToSoDimNameType}};
+use physics_basic::{body::{calculate_angular_state, calculate_position_state, collect_angular_state_det_agi_agm_change_agv, collect_position_state_det_pos_momentum_change_vel}, rotation::{DimNameToSoDimName, DimNameToSoDimNameType}};
 use statistic_physics::formulas::{calculate_density, calculate_vel_var};
-use wacky_bag_hlist::{h_list_helpers::{FoldVecPush, HMapP, HTypeFnToMapper, HTypeMapP, HZip, MapFromRef, MapMut, MapRef, MapToPhantom}, type_fn::{ReverseFunc, TypeFnAsPhantomFn}, chain_fn::ChainFunc};
+use wacky_bag_hlist::{chain_fn::ChainFunc, h_list_helpers::{FoldVecPush, HMapP, HTypeFnToMapper, HTypeMapP, HZip, MapFromMut, MapFromRef, MapMut, MapRef, MapToPhantom}, type_fn::{ReverseFunc, TypeFnAsPhantomFn}};
 use wacky_bag::{structures::owned::Owned, utils::{default_of::default, }};
-use wacky_bag_bevy::{stat_component::stat_apply_change::StatChangeToApplyChanges, system::{multi_sets::{FoldScheduleConfigsAfterSets, FoldScheduleConfigsBeforeSets, FoldScheduleConfigsInSet}, processing_system::{MapToProcessingSystemSet, ScheduleConfigsProcessing}}, utils::{h_list_query::{HToQuery, HToQueryType}, stat_for_hlist::{HChangeAdd, HStatSet, MapFromStatRef, MapToChange, MapToDetermining, MapToStat, MapToWith}}};
+use wacky_bag_bevy::{stat_component::stat_apply_change::StatChangeToApplyChanges, system::{multi_sets::{FoldScheduleConfigsAfterSets, FoldScheduleConfigsBeforeSets, FoldScheduleConfigsInSet, ScheduleConfigsAfterSets}, processing_system::{MapToProcessingSystemSet, ScheduleConfigsProcessing, processing_system_sets}}, utils::{h_list_query::{HToQuery, HToQueryType}, stat_for_hlist::{HChangeAdd, HStatSet, HTakeChagne, MapFromStatRef, MapToChange, MapToDetermining, MapToStat, MapToWith}}};
 
 
 use crate::{physics::bundle::PhyBodyStatisticBundleDetermining, schedule::schedule_apply_change};
 
-/// use [to_calculate_system] for system instead for type system to find marker
+/// use [to_calculate_system] for system
 #[derive(Debug,Default,Clone, Copy)]
 pub struct CalculateChangeSystem<F>(pub F);
 
@@ -112,18 +112,165 @@ where
 }
 
 
-/// use [to_calculate_system] for system instead for type system to find marker
+/// use [to_calculate_system] for system
 #[derive(Debug,Default,Clone, Copy)]
 pub struct CalculateStatSystem<F>(pub F);
 
 /// convert a Fn(HList!(&A,&B,&C))->HList!(D,E,F) into a system with Query<(&Stat<A>,&Stat<B>,&Stat<C>,&mut Stat<D>,&mut Stat<E>,&mut Stat<F>)>
 pub fn to_calculate_stat_system<F,FIR,FO>(f:F)->
-impl SystemParamFunction<CalculateStatSystemMarker<(FIR,FO)>,In = (),Out = ()>
+impl SystemParamFunction<(FIR,FO),In = (),Out = ()>
 // CalculateSystem<F>
 	where F:Fn(FIR)->FO+Send+Sync+'static,
-	CalculateStatSystem<F>:SystemParamFunction<CalculateStatSystemMarker<(FIR,FO)>,In = (),Out = ()>
+	CalculateStatSystem<F>:SystemParamFunction<(FIR,FO),In = (),Out = ()>
 {
 	CalculateStatSystem(f)
+}
+
+#[derive(Debug,Default,Clone, Copy)]
+pub struct CollectChangeSystem<F>(pub F);
+
+pub fn to_collect_change_system<F,FIR,FIC,FO>(f:F)->
+impl SystemParamFunction<(FIR,FIC,FO),In = (),Out = ()>
+where F:Fn(FIR,FIC)->FO,
+	CollectChangeSystem<F>:SystemParamFunction<(FIR,FIC,FO),In = (),Out = ()>
+{
+	CollectChangeSystem(f)
+}
+
+pub fn to_collect_change_system_with_processing<F,FIR,FIC,FO>(f:F)->
+	ScheduleConfigs<ScheduleSystem>
+// CalculateSystem<F>
+where 
+	F:Fn(FIR,FIC)->FO+'static,
+	CollectChangeSystem<F>:SystemParamFunction<(FIR,FIC,FO),In = (),Out = ()>,
+	FIR:'static,FIC:'static,FO:'static,
+	// FIR:HMappable<
+	// 	Poly<HTypeFnToMapper<ChainFunc<MapFromRef,MapToStat>>>,
+	// 	Output : HMappable<
+	// 		Poly<MapToProcessingSystemSet>,
+	// 		Output :Default+HFoldLeftable<
+	// 			Poly<FoldScheduleConfigsAfterSets>, 
+	// 			ScheduleConfigs<ScheduleSystem>,
+	// 			Output = ScheduleConfigs<ScheduleSystem>>>>,
+	FIC:HMappable<
+		Poly<MapToChange>,
+		Output : HMappable<
+			Poly<MapToProcessingSystemSet>,
+			Output :Default+HFoldLeftable<
+				Poly<FoldScheduleConfigsAfterSets>, 
+				ScheduleConfigs<ScheduleSystem>,
+				Output = ScheduleConfigs<ScheduleSystem>>>>,
+	FO:HMappable<
+		Poly<MapToChange>,
+		Output : HMappable<
+			Poly<MapToProcessingSystemSet>,
+			Output :Default+HFoldLeftable<
+				Poly<FoldScheduleConfigsBeforeSets>, 
+				ScheduleConfigs<ScheduleSystem>,
+				Output = ScheduleConfigs<ScheduleSystem>>>>
+{
+	let r=CollectChangeSystem(f);
+	let cfg=r.into_configs()
+		.config_processing::<
+			// HMapP<FIR,HTypeFnToMapper<ChainFunc<MapFromRef,MapToStat>>>,
+			HMapP<FIC,MapToChange>,
+			HNil,
+			HMapP<FO,MapToChange>
+		>()
+		;
+	// .after_sets(processing_system_sets::<HMapP<FIC,MapToChange>>());
+	cfg
+}
+
+impl<
+	F,
+	FIR,FIC,FO,
+	FIRS, FICMC, FOC, FOMC,
+	FIRSQ, FICMCQ, FOMSQ,
+	// FIRSQR, FOMSQR,
+	// FIR2,
+	FO2,
+	// M
+> SystemParamFunction<
+	// (Self,FIR,FO)
+	// (FIR,FO)
+	// HList!(FIR,FO)
+	(FIR,FIC,FO)
+	
+	// (<<FIRSQR as QueryData>::Item<'static,'static> as HMappable<Poly<MapFromStatRef>>>::Output, FO2)
+> 
+for CollectChangeSystem<F>
+where 
+	// Self:GetCalculateSystemMarker<M,Marker = CalculateSystemMarker<(FIR,FO)>>,
+	F:Send+Sync+'static,
+	for<'a,'w,'s> &'a F:
+		Fn(FIR,FIC)->FO+
+		Fn( 
+			<<FIRSQ as QueryData>::Item<'w,'s> as HMappable<Poly<MapFromStatRef>>>::Output,
+			<<FICMCQ as QueryData>::Item<'w,'s> as HMappable<Poly<HTakeChagne>>>::Output
+		)->FO2,
+	
+	// F:Fn(FIR)->FO,
+
+	FIR:HMappable<Poly<HTypeFnToMapper<ReverseFunc<MapFromStatRef>>>,Output = FIRS>,
+	
+	FIRS:HMappable<Poly<MapFromStatRef>,Output = FIR>,
+
+	FIC:HMappable<Poly<HTypeFnToMapper< ChainFunc< MapToChange, ReverseFunc<MapFromMut>> >>, Output = FICMC>,
+
+	FICMC:HMappable<Poly<HTakeChagne>,Output = FIC>,
+
+	FO:HMappable<Poly<MapToChange>,Output = FOC>,
+	FOC:HMappable<Poly<HTypeFnToMapper<MapMut<'static>>>,Output = FOMC>,
+	// for<'a> FOC:HMappable<Poly<HTypeFnToMapper<MapRef<'a>>>>,
+
+	// FIRS:'static,FORC:'static,
+	FIRS:HToQuery<Output = FIRSQ>,
+	FICMC:HToQuery<Output = FICMCQ>,
+	FOMC:HToQuery<Output = FOMSQ>,
+	// for<'a> HMapP<FOC,HTypeFnToMapper<MapRef<'a>>>:HToQuery,
+
+	FIRSQ:'static+QueryData,
+	FICMCQ:'static+QueryData,
+	FOMSQ:'static+QueryData,
+	// for<'a> HToQueryType<HMapP<FOC,HTypeFnToMapper<MapRef<'a>>>>:'static+QueryData,
+	// for<'a> <HToQueryType<HMapP<FOC,HTypeFnToMapper<MapRef<'a>>>> as QueryData>::ReadOnly:ReadOnlyQueryData,
+
+	for<'w,'s> <FIRSQ as QueryData>::Item<'w,'s>: HMappable<Poly<MapFromStatRef>/*,Output = FIR2*/>,
+	// for<'w,'s> <FIRSQR as QueryData>::Item<'w,'s>: HMappable<Poly<MapFromStatRef>,Output = FIR2>,
+	for<'w,'s> <FICMCQ as QueryData>::Item<'w,'s>: HMappable<Poly<HTakeChagne>>,
+	// for<'a,'w,'s> FO2:HZippable< <<HToQueryType<HMapP<FOC,HTypeFnToMapper<MapRef<'a>>>> as QueryData>::ReadOnly as QueryData>::Item<'w,'s>,Zipped : HMappable<Poly<HChangeAdd>> >
+	for<'w,'s> FO2:HZippable< <FOMSQ as QueryData>::Item<'w,'s>,Zipped : HMappable<Poly<HChangeAdd>> >
+{
+    type In = ();
+    type Out = ();
+    type Param = Query<'static,'static,(
+		HToQueryType<FIRS>,
+		HToQueryType<FICMC>,
+		HToQueryType<FOMC>
+	)>;
+	
+    fn run(
+            &mut self,
+            _input:(),
+            mut param_value: bevy::ecs::system::SystemParamItem<Self::Param>,
+        ) -> () 
+	{
+		param_value.par_iter_mut().for_each(|(a,b,c)|{
+			let firs=a;
+			let ficmc=b;
+			let fir=firs.map(Poly(MapFromStatRef));
+			let fic=ficmc.map(Poly(HTakeChagne));
+			fn call_inner<FI,FI2,FO>(f:impl Fn( FI,FI2 )->FO,i:FI,i2:FI2)->FO{
+				f(i,i2)
+			}
+			let f:&F=&self.0;
+			// let fo=(f)(fir);
+			let fo=call_inner(f,fir,fic);
+			fo.zip(c).map(Poly(HChangeAdd));
+		});
+		
+    }
 }
 
 
@@ -136,7 +283,7 @@ pub fn to_calculate_stat_system_with_processing<F,FIR,FO>(f:F)->
 where 
 	F:Fn(FIR)->FO+Send+Sync+'static,
 	FIR:'static,FO:'static,
-	CalculateStatSystem<F>:SystemParamFunction<CalculateStatSystemMarker<(FIR,FO)>,In = (),Out = ()>,
+	CalculateStatSystem<F>:SystemParamFunction<(FIR,FO),In = (),Out = ()>,
 	FIR:HMappable<Poly<HTypeFnToMapper<ChainFunc<MapFromRef,MapToStat>>>,Output : HMappable<Poly<MapToProcessingSystemSet>,Output :Default+HFoldLeftable<Poly<FoldScheduleConfigsAfterSets>, ScheduleConfigs<ScheduleSystem>,Output = ScheduleConfigs<ScheduleSystem>>>>,
 	FO:HMappable<Poly<MapToStat>,Output : HMappable<Poly<MapToProcessingSystemSet>,Output :Default+HFoldLeftable<Poly<FoldScheduleConfigsBeforeSets>, ScheduleConfigs<ScheduleSystem>,Output = ScheduleConfigs<ScheduleSystem>>>>
 {
@@ -150,8 +297,9 @@ where
 	cfg
 }
 
-#[derive(Debug,Default,Clone, Copy)]
-pub struct CalculateStatSystemMarker<A>(pub A);
+// #[derive(Debug,Default,Clone, Copy)]
+// pub struct CalculateStatSystemMarker<A>(pub A);
+pub type CalculateStatSystemMarker<A>=A;
 
 impl<
 	F,
@@ -166,7 +314,7 @@ impl<
 	// (Self,FIR,FO)
 	// (FIR,FO)
 	// HList!(FIR,FO)
-	CalculateStatSystemMarker<(FIR,FO)>
+	(FIR,FO)
 	
 	// (<<FIRSQR as QueryData>::Item<'static,'static> as HMappable<Poly<MapFromStatRef>>>::Output, FO2)
 > 
@@ -282,7 +430,21 @@ pub fn calculate_vel_var_plugin<Num:RealField+Copy,const DIM:usize>(app:&mut App
 
 pub fn calculate_density_plugin<Num:RealField+Copy>(app:&mut App){
 	app.add_systems(schedule_apply_change(), to_calculate_stat_system_with_processing(calculate_density::<Num>));
+}
 
+pub fn collect_position_state_det_pos_momentum_change_vel_plugin<Num:RealField+Copy,const DIM:usize>(app:&mut App){
+	app.add_systems(schedule_apply_change(), to_collect_change_system_with_processing(collect_position_state_det_pos_momentum_change_vel::<Num,DIM>));
+}
+
+pub fn collect_angular_state_det_agi_agm_change_agv_plugin<Num,const DIM:usize>(app:&mut App)
+where
+	Num:RealField+Copy,
+	Const<DIM>: DimNameToSoDimName + DimName,
+	DefaultAllocator: Allocator<DimNameToSoDimNameType<DIM>, DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>+Allocator<DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>,
+    DimNameToSoDimNameType<DIM>:
+        DimMin<DimNameToSoDimNameType<DIM>, Output = DimNameToSoDimNameType<DIM>>,
+{
+	app.add_systems(schedule_apply_change(), to_collect_change_system_with_processing(collect_angular_state_det_agi_agm_change_agv::<Num,DIM>));
 }
 #[derive(Debug,Clone, Copy)]
 pub struct CalculateSystemsPlugins<Num,const DIM:usize>(pub PhantomData<[Num;DIM]>)
@@ -322,6 +484,8 @@ where
 			.add(calculate_angular_state_plugin::<Num,DIM>)
 			.add(calculate_vel_var_plugin::<Num,DIM>)
 			.add(calculate_density_plugin::<Num>)
+			.add(collect_position_state_det_pos_momentum_change_vel_plugin::<Num,DIM>)
+			.add(collect_angular_state_det_agi_agm_change_agv_plugin::<Num,DIM>)
 			.add(spawn_stat_apply_change_system_plugin::<Num,DIM>)
 		;
 		
