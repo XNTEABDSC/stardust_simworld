@@ -1,13 +1,13 @@
-use std::{marker::PhantomData};
+use std::{marker::PhantomData, ops::DerefMut};
 
-use bevy::{app::{App, PluginGroup, PluginGroupBuilder}, ecs::{query::{QueryData, ReadOnlyQueryData}, schedule::{IntoScheduleConfigs, ScheduleConfigs}, system::{Query, ScheduleSystem}}, prelude::SystemParamFunction};
-use frunk::{HNil, Poly, hlist::{HFoldLeftable, HMappable, HZippable}};
+use bevy::{app::{App, PluginGroup, PluginGroupBuilder}, ecs::{query::{QueryData, QueryItem, ReadOnlyQueryData}, schedule::{IntoScheduleConfigs, ScheduleConfigs}, system::{Query, ScheduleSystem}}, prelude::SystemParamFunction};
+use frunk::{Func, HList, HNil, Poly, ToMut, ToRef, hlist::{HFoldLeftable, HMappable, HZippable}};
 use nalgebra::{Const, DefaultAllocator, DimMin, DimName, RealField, allocator::Allocator};
-use physics_basic::{body::{calculate_angular_state, calculate_position_state, collect_angular_state_det_agi_agm_change_agv, collect_position_state_det_pos_momentum_change_vel}, rotation::{DimNameToSoDimName, DimNameToSoDimNameType}};
+use physics_basic::{body::{calculate_angular_state, calculate_position_state, collect_angular_state_det_agi_agm_change_agv, collect_position_state_det_pos_momentum_change_vel}, rotation::{DimNameToSoDimName, DimNameToSoDimNameType}, stats::Vel};
 use statistic_physics::formulas::{calculate_density, calculate_vel_var};
-use wacky_bag_hlist::{chain_fn::ChainFunc, h_list_helpers::{FoldVecPush, HMapP, HTypeFnToMapper, HTypeMapP, HZip, MapFromMut, MapFromRef, MapMut, MapRef, MapToPhantom}, type_fn::{ReverseFunc, TypeFnAsPhantomFn}};
+use wacky_bag_hlist::{chain_fn::ChainFunc, h_list_helpers::{FoldVecPush, HMapP, HToMut, HToRef, HTypeFnToMapper, HTypeMapP, HZip, MapDeref, MapDerefMut, MapFromMut, MapFromRef, MapMut, MapRef, MapToPhantom}, type_fn::{ReverseFunc, TypeFnAsPhantomFn}};
 use wacky_bag::{structures::owned::Owned, utils::{default_of::default, }};
-use wacky_bag_bevy::{stat_component::stat_apply_change::StatChangeToApplyChanges, system::{multi_sets::{FoldScheduleConfigsAfterSets, FoldScheduleConfigsBeforeSets, FoldScheduleConfigsInSet, ScheduleConfigsAfterSets}, processing_system::{MapToProcessingSystemSet, ScheduleConfigsProcessing, processing_system_sets}}, utils::{h_list_query::{HToQuery, HToQueryType}, stat_for_hlist::{HChangeAdd, HStatSet, HTakeChagne, MapFromStatRef, MapToChange, MapToDetermining, MapToStat, MapToWith}}};
+use wacky_bag_bevy::{stat_component::stat_apply_change::StatChangeToApplyChanges, system::{multi_sets::{FoldScheduleConfigsAfterSets, FoldScheduleConfigsBeforeSets, FoldScheduleConfigsInSet, ScheduleConfigsAfterSets}, processing_system::{MapToProcessingSystemSet, ScheduleConfigsProcessing, processing_system_sets}}, utils::{h_list_query::{HToQuery, HToQueryType}, stat_for_hlist::{HChangeAdd, HChangeAddG, HStatSet, HTakeChagne, HTakeChagneG, MapFromStatRef, MapToChange, MapToDetermining, MapToStat, MapToWith}}};
 
 
 use crate::{physics::bundle::PhyBodyStatisticBundleDetermining, schedule::schedule_apply_change};
@@ -187,6 +187,7 @@ impl<
 	FIR,FIC,FO,
 	FIRS, FICMC, FOC, FOMC,
 	FIRSQ, FICMCQ, FOMSQ,
+	
 	// FIRSQR, FOMSQR,
 	// FIR2,
 	FO2,
@@ -206,8 +207,11 @@ where
 	for<'a,'w,'s> &'a F:
 		Fn(FIR,FIC)->FO+
 		Fn( 
-			<<FIRSQ as QueryData>::Item<'w,'s> as HMappable<Poly<MapFromStatRef>>>::Output,
-			<<FICMCQ as QueryData>::Item<'w,'s> as HMappable<Poly<HTakeChagne>>>::Output
+			// <<FIRSQ as QueryData>::Item<'w,'s> as HMappable<Poly<MapFromStatRef>>>::Output,
+			HMapP<QueryItem<FIRSQ>,MapFromStatRef>,
+			// <<FICMCQ as QueryData>::Item<'w,'s> as HMappable<Poly<ChainFunc<MapDerefMut,HTakeChagne>>>>::Output
+			// HMapP<HToMut<QueryItem<FICMCQ>>,ChainFunc<MapDerefMut,HTakeChagne>>
+			HMapP<QueryItem<FICMCQ>,HTakeChagneG>
 		)->FO2,
 	
 	// F:Fn(FIR)->FO,
@@ -216,7 +220,7 @@ where
 	
 	FIRS:HMappable<Poly<MapFromStatRef>,Output = FIR>,
 
-	FIC:HMappable<Poly<HTypeFnToMapper< ChainFunc< MapToChange, ReverseFunc<MapFromMut>> >>, Output = FICMC>,
+	FIC:HMappable<Poly<HTypeFnToMapper< ChainFunc< MapToChange, MapMut<'static>> >>, Output = FICMC>,
 
 	FICMC:HMappable<Poly<HTakeChagne>,Output = FIC>,
 
@@ -238,9 +242,21 @@ where
 
 	for<'w,'s> <FIRSQ as QueryData>::Item<'w,'s>: HMappable<Poly<MapFromStatRef>/*,Output = FIR2*/>,
 	// for<'w,'s> <FIRSQR as QueryData>::Item<'w,'s>: HMappable<Poly<MapFromStatRef>,Output = FIR2>,
-	for<'w,'s> <FICMCQ as QueryData>::Item<'w,'s>: HMappable<Poly<HTakeChagne>>,
+	// for<'a,'w,'s> QueryItem<'w,'s,FICMCQ>: ToMut<'a,Output = FICMCQIM>,
+	// FICMCQIM: HMappable<Poly<ChainFunc<MapDerefMut, HTakeChagne>>>,
+	// for<'w,'s,'a> QueryItem<'w,'s,FICMCQ>: ToMut<'a>,
+	// for<'w,'s,'a> HToMut<'a,QueryItem<'w,'s,FICMCQ>>:HMappable<Poly<HTakeChagneG>>,
+	for<'w,'s> QueryItem<'w,'s,FICMCQ>:HMappable<Poly<HTakeChagneG>>,
+	// for<'w,'s> <FICMCQ as QueryData>::Item<'w,'s>: ToMut<'w, Output : HMappable<Poly<ChainFunc<MapDerefMut, HTakeChagne>>>>,//HTakeChagne
+	// for<'w,'s> <<FICMCQ as QueryData>::Item<'w,'s> as ToMut<'w>>::Output:HMappable<Poly<ChainFunc<MapDerefMut,HTakeChagne>>>,
+	// for<'w, 's> <<FICMCQ as QueryData>::Item<'w, 's> as ToMut<'w>>::Output: HMappable<Poly<ChainFunc<MapDerefMut, HTakeChagne>>>,
 	// for<'a,'w,'s> FO2:HZippable< <<HToQueryType<HMapP<FOC,HTypeFnToMapper<MapRef<'a>>>> as QueryData>::ReadOnly as QueryData>::Item<'w,'s>,Zipped : HMappable<Poly<HChangeAdd>> >
-	for<'w,'s> FO2:HZippable< <FOMSQ as QueryData>::Item<'w,'s>,Zipped : HMappable<Poly<HChangeAdd>> >
+	// for<'w,'s,'a> QueryItem<'w,'s,FOMSQ>: ToRef<'a>,//HMappable<Poly<MapDerefMut>>,
+	// for<'w,'s,'a> HToRef<'a,QueryItem<'w,'s,FOMSQ>>: HMappable<Poly<MapDeref>>,
+	// for<'w,'s,'a> FO2:HZippable< HMapP<HToRef<'a,QueryItem<'w,'s,FOMSQ>>,MapDeref>,Zipped : HMappable<Poly<HChangeAdd>> >,
+	
+	for<'w,'s> FO2:HZippable< QueryItem<'w,'s,FOMSQ>,Zipped : HMappable<Poly<HChangeAddG>> >,
+
 {
     type In = ();
     type Out = ();
@@ -256,18 +272,18 @@ where
             mut param_value: bevy::ecs::system::SystemParamItem<Self::Param>,
         ) -> () 
 	{
-		param_value.par_iter_mut().for_each(|(a,b,c)|{
+		param_value.par_iter_mut().for_each(|(a,b,mut c)|{
 			let firs=a;
 			let ficmc=b;
 			let fir=firs.map(Poly(MapFromStatRef));
-			let fic=ficmc.map(Poly(HTakeChagne));
+			let fic=ficmc.map(Poly(HTakeChagneG));
 			fn call_inner<FI,FI2,FO>(f:impl Fn( FI,FI2 )->FO,i:FI,i2:FI2)->FO{
 				f(i,i2)
 			}
 			let f:&F=&self.0;
 			// let fo=(f)(fir);
 			let fo=call_inner(f,fir,fic);
-			fo.zip(c).map(Poly(HChangeAdd));
+			fo.zip(c).map(Poly(HChangeAddG));
 		});
 		
     }
@@ -433,6 +449,12 @@ pub fn calculate_density_plugin<Num:RealField+Copy>(app:&mut App){
 }
 
 pub fn collect_position_state_det_pos_momentum_change_vel_plugin<Num:RealField+Copy,const DIM:usize>(app:&mut App){
+	// let dwa:<HList!(Vel<Num,DIM>) as HMappable<Poly<HTypeFnToMapper< ChainFunc< MapToChange, ReverseFunc<MapFromMut>> >>> >::Output;
+	let a:bevy::ecs::world::Mut<'static,i32>;
+	// let b=MapDerefMut::call(&mut a);
+	// a.der
+	// let wat:<bevy::ecs::world::Mut<'static,i32> as std::ops::Dere>::Target;
+	// let dwa:<frunk::HCons<bevy::ecs::world::Mut<'static, wacky_bag_bevy::stat_component::change::Change<physics_basic::stats::Vel<Num, DIM>>>, HNil> as HMappable<Poly<MapDerefMut>>>::Output;
 	app.add_systems(schedule_apply_change(), to_collect_change_system_with_processing(collect_position_state_det_pos_momentum_change_vel::<Num,DIM>));
 }
 

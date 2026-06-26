@@ -13,7 +13,7 @@ pub fn phy_body_bundle<Num,const DIM:usize>(basics:PhyBodyBasic<Num,DIM>)
 	->impl Bundle
 where 
 	Num:RealField+Copy+Default,
-	Const<DIM>: DimNameToSoDimName + DimName,
+	Const<DIM>: DimNameToSoDimName + DimName + DimMin<Const<DIM>,Output = Const<DIM>>,
 	DefaultAllocator: Allocator<DimNameToSoDimNameType<DIM>, DimNameToSoDimNameType<DIM>, Buffer<Num> :Send+Sync >+Allocator<DimNameToSoDimNameType<DIM>>,
     DimNameToSoDimNameType<DIM>:
         DimMin<DimNameToSoDimNameType<DIM>, Output = DimNameToSoDimNameType<DIM>>,
