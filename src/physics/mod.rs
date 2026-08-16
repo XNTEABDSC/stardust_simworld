@@ -5,7 +5,8 @@ use std::marker::PhantomData;
 
 use bevy::app::{PluginGroup, PluginGroupBuilder};
 use nalgebra::{Const, DefaultAllocator, DimMin, DimName, RealField, allocator::Allocator};
-use physics_basic::rotation::{DimNameToSoDimName, DimNameToSoDimNameType};
+use physics_basic::rotation::{ConstDimToSoDimT, DimSquare, DimSquareSo, DimToSoDimT};
+
 
 use crate::physics::systems::CalculateSystemsPlugins;
 
@@ -25,10 +26,9 @@ impl<Num, const DIM: usize> Default for Plugins<Num, DIM> {
 impl<Num,const DIM:usize> PluginGroup for Plugins<Num,DIM>
 where
 	Num:RealField+Copy,
-	Const<DIM>: DimNameToSoDimName + DimName + DimMin<Const<DIM>, Output = Const<DIM>>,
-	DefaultAllocator: Allocator<DimNameToSoDimNameType<DIM>, DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>+Allocator<DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>,
-    DimNameToSoDimNameType<DIM>:
-        DimMin<DimNameToSoDimNameType<DIM>, Output = DimNameToSoDimNameType<DIM>>,
+	Const<DIM>: DimSquareSo,
+	DefaultAllocator: Allocator<ConstDimToSoDimT<DIM>, ConstDimToSoDimT<DIM>,Buffer<Num>:Sync+Send>+Allocator<ConstDimToSoDimT<DIM>,Buffer<Num>:Sync+Send>,
+    ConstDimToSoDimT<DIM>:DimSquare,
 {
 	fn build(self) -> PluginGroupBuilder {
 		PluginGroupBuilder::start::<Self>()

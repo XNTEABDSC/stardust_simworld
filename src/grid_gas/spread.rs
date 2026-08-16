@@ -8,7 +8,8 @@ use wacky_bag::structures::n_dim_array::dim_dir::DimDirIter;
 use wacky_bag::utils::num_extend::NumExtends;
 use wacky_bag::{structures::n_dim_array::{dim_dir::DimDir, t_n_dim_array::{TNDimArrayForEachEdgeParallel, TNDimArrayIterPairParallel}}};
 
-use wacky_bag_hlist::select_zip::HSelectZippable;
+use wacky_bag_hlist::select_zip::{h_sculpt_select_zip, h_select_zip};
+use wacky_bag_hlist::type_fn::TypeFnAsPhantomFn;
 use wacky_bag_hlist::{h_list_helpers::MapNeg, output_map::HMappableFrom};
 use wacky_bag_bevy::utils::{stat_for_hlist::{HAddChange, HChangeTransfer, MapFromStatRef, Select2ChangeRef, SelectChangeRef}, thread_scope::ComputeTaskPoolScopeCreater};
 
@@ -50,7 +51,8 @@ pub fn grid_gas_spread<Num:RealField+Copy+NormalCdfConsts<Marker>,const DIM:usiz
 		// r.map(Poly(MapNeg))
 		// .select_zip(Poly(SelectChangeRef::default()), a.to_ref().sculpt().0)
 		// .map(Poly(HAddChange));
-		r.select_zip(Poly(Select2ChangeRef::default()), a.to_ref().zip(b.to_ref()).sculpt().0).map(Poly(HChangeTransfer));
+		// r.select_zip(Poly(Select2ChangeRef::default()), a.to_ref().zip(b.to_ref()).sculpt().0).map(Poly(HChangeTransfer));
+		h_sculpt_select_zip(r, Select2ChangeRef::default(), a.to_ref().zip(b.to_ref())).0.map(Poly(HChangeTransfer));
 		// r.zip(a.to_ref().zip(b.to_ref()).sculpt::<_,_>().0).map(Poly(HChangeTransfer));
 		
 	}, &ComputeTaskPoolScopeCreater);
@@ -94,8 +96,9 @@ pub fn grid_gas_spread_edge_wall<Num:RealField+Copy+NormalCdfConsts<Marker>,cons
 				}
 			}
 
-			(hlist![m]).select_zip(Poly(SelectChangeRef::default()), a.to_ref().sculpt().0)
-			.map(Poly(HAddChange));
+			// (hlist![m]).select_zip(Poly(SelectChangeRef::default()), a.to_ref().sculpt().0)
+			// .map(Poly(HAddChange));
+			h_select_zip(hlist![m], SelectChangeRef::default(), a.to_ref().sculpt().0).map(Poly(HAddChange));
 
 		}
 		, &ComputeTaskPoolScopeCreater);
@@ -145,13 +148,22 @@ pub fn grid_gas_spread_edge_const<Num:RealField+Copy+NormalCdfConsts<Marker>,con
 					)
 					, dir_vec, edge_len, dt);
 				
-				r.map(Poly(MapNeg))
-				.select_zip(Poly(SelectChangeRef::default()), a.to_ref().sculpt().0)
-				.map(Poly(HAddChange));
+				
+				// .select_zip(Poly(SelectChangeRef::default()), a.to_ref().sculpt().0)
+				// .map(Poly(HAddChange));
+				h_select_zip(
+					r.map(Poly(MapNeg)), 
+					SelectChangeRef::default(),
+					a.to_ref().sculpt().0).map(Poly(HAddChange));
 
-				edge_spread
-				.select_zip(Poly(SelectChangeRef::default()), a.to_ref().sculpt().0)
-				.map(Poly(HAddChange));
+				// edge_spread
+				// .select_zip(Poly(SelectChangeRef::default()), a.to_ref().sculpt().0)
+				// .map(Poly(HAddChange));
+			
+				h_select_zip(
+					edge_spread, 
+					SelectChangeRef::default(),
+					a.to_ref().sculpt().0).map(Poly(HAddChange));
 			}
 			, &ComputeTaskPoolScopeCreater);
 		}

@@ -4,7 +4,7 @@ use bevy::{app::App, ecs::{schedule::{IntoScheduleConfigs, ScheduleConfigs}, sys
 use frunk::{HList, Poly};
 use nalgebra::{Const, DefaultAllocator, DimMin, DimName, RealField, allocator::Allocator};
 use num_traits::Zero;
-use physics_basic::{rotation::{DimNameToSoDimName, DimNameToSoDimNameType}, stat_to_change_type::{HMapStatToChangeTypeZ, MapStatToChangeTypeZ}};
+use physics_basic::{ rotation::{AllocatorSyncVMSq, AllocatorVMSq, ConstDimToSoDimT, DimSquare, DimToSoDim}, stat_to_change_type::{HMapStatToChangeTypeZ, MapStatToChangeTypeZ}};
 use wacky_bag_hlist::{impl_func_clause, h_list_helpers::{HMapP, MapToPhantom}};
 use wacky_bag_bevy::{stat_component::change::Change, system::{processing_system::ScheduleConfigsProcessing, propagate_relationship::{PropagateChangeLeafToRoot, propagate_leaf_to_root}}};
 
@@ -42,10 +42,10 @@ where T:Send+Sync+AddAssign+'static+Zero{
 pub fn change_propagate_leaf_to_root_plugin<Num,const DIM:usize>(app:&mut App)
 where 
 	Num:RealField+Copy,
-	Const<DIM>: DimNameToSoDimName + DimName + DimMin<Const<DIM>, Output = Const<DIM>>,
-	DefaultAllocator: Allocator<DimNameToSoDimNameType<DIM>, DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>+Allocator<DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>,
-    DimNameToSoDimNameType<DIM>:
-        DimMin<DimNameToSoDimNameType<DIM>, Output = DimNameToSoDimNameType<DIM>>,
+	Const<DIM>: DimToSoDim + DimName + DimSquare,
+	DefaultAllocator: 
+		AllocatorSyncVMSq<ConstDimToSoDimT<DIM>,Num>,
+	//Allocator<DimNameToSoDimNameType<DIM>, DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>+Allocator<DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>,
 {
 	// HMapStatToChangeTypeZ
 	let dwa=default::<

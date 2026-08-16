@@ -2,7 +2,8 @@ use std::marker::PhantomData;
 
 use bevy::app::{App, PluginGroup, PluginGroupBuilder};
 use nalgebra::{Const, DefaultAllocator, DimName, RealField, allocator::Allocator};
-use physics_basic::rotation::{DimNameToSoDimName, DimNameToSoDimNameType};
+
+use physics_basic::rotation::{AllocatorSyncVMSq, ConstDimToSoDimT, DimToSoDim};
 use wacky_bag::math::normal_cdf::NormalCdfConsts;
 use wacky_bag_bevy::utils::plugin_add_systems::plugin_add_systems;
 
@@ -40,9 +41,8 @@ impl<Num,const DIM:usize,Marker> PluginGroup for GridGasPlugins<Num,DIM,Marker>
 where 
 	Num:RealField+Copy+NormalCdfConsts<Marker>,
 	Marker:Send+Sync+'static,
-    Const<DIM>: DimNameToSoDimName + DimName,
-    DefaultAllocator: Allocator<DimNameToSoDimNameType<DIM>>
-        + Allocator<DimNameToSoDimNameType<DIM>, DimNameToSoDimNameType<DIM>, Buffer<Num>:Send+Sync >,
+    Const<DIM>: DimToSoDim + DimName,
+    DefaultAllocator: AllocatorSyncVMSq<ConstDimToSoDimT<DIM>,Num>,
 
 {
 	fn build(self) -> PluginGroupBuilder {

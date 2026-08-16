@@ -3,7 +3,7 @@ use std::{marker::PhantomData, ops::DerefMut};
 use bevy::{app::{App, PluginGroup, PluginGroupBuilder}, ecs::{query::{QueryData, QueryItem, ReadOnlyQueryData}, schedule::{IntoScheduleConfigs, ScheduleConfigs}, system::{Query, ScheduleSystem}}, prelude::SystemParamFunction};
 use frunk::{Func, HList, HNil, Poly, ToMut, ToRef, hlist::{HFoldLeftable, HMappable, HZippable}};
 use nalgebra::{Const, DefaultAllocator, DimMin, DimName, RealField, allocator::Allocator};
-use physics_basic::{body::{calculate_angular_state, calculate_position_state, collect_angular_state_det_agi_agm_change_agv, collect_position_state_det_pos_momentum_change_vel}, rotation::{DimNameToSoDimName, DimNameToSoDimNameType}, stats::Vel};
+use physics_basic::{body::{calculate_angular_state, calculate_position_state, calculate_rotation_matrix, collect_angular_state_det_agi_agm_change_agv, collect_position_state_det_pos_momentum_change_vel}, rotation::{AllocatorSyncSq, AllocatorSyncVMSq, ConstDimToSoDimT, DimSquare, DimToSoDim}, stats::Vel};
 use statistic_physics::formulas::{calculate_density, calculate_vel_var};
 use wacky_bag_hlist::{chain_fn::ChainFunc, h_list_helpers::{FoldVecPush, HMapP, HToMut, HToRef, HTypeFnToMapper, HTypeMapP, HZip, MapDeref, MapDerefMut, MapFromMut, MapFromRef, MapMut, MapRef, MapToPhantom}, type_fn::{ReverseFunc, TypeFnAsPhantomFn}};
 use wacky_bag::{structures::owned::Owned, utils::{default_of::default, }};
@@ -432,10 +432,9 @@ pub fn calculate_position_state_plugin<Num:RealField+Copy,const DIM:usize>(app:&
 pub fn calculate_angular_state_plugin<Num,const DIM:usize>(app:&mut App)
 where
 	Num:RealField+Copy,
-	Const<DIM>: DimNameToSoDimName + DimName,
-	DefaultAllocator: Allocator<DimNameToSoDimNameType<DIM>, DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>+Allocator<DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>,
-    DimNameToSoDimNameType<DIM>:
-        DimMin<DimNameToSoDimNameType<DIM>, Output = DimNameToSoDimNameType<DIM>>,
+	Const<DIM>: DimToSoDim + DimName + DimSquare,
+	DefaultAllocator: AllocatorSyncVMSq<ConstDimToSoDimT<DIM>,Num>,
+    ConstDimToSoDimT<DIM>:DimSquare,
 {
 	app.add_systems(schedule_apply_change(), to_calculate_stat_system_with_processing(calculate_angular_state::<Num,DIM>));
 }
@@ -448,9 +447,19 @@ pub fn calculate_density_plugin<Num:RealField+Copy>(app:&mut App){
 	app.add_systems(schedule_apply_change(), to_calculate_stat_system_with_processing(calculate_density::<Num>));
 }
 
+pub fn calculate_rotation_matrix_plugin<Num:RealField+Copy,const DIM:usize>(app:&mut App)
+where
+	Const<DIM>: DimToSoDim + DimName + DimSquare,
+	DefaultAllocator: AllocatorSyncVMSq<ConstDimToSoDimT<DIM>,Num>,
+    ConstDimToSoDimT<DIM>:DimSquare,
+{
+	app.add_systems(schedule_apply_change(), to_calculate_stat_system_with_processing(calculate_rotation_matrix::<Num,DIM>));
+
+}
+
 pub fn collect_position_state_det_pos_momentum_change_vel_plugin<Num:RealField+Copy,const DIM:usize>(app:&mut App){
 	// let dwa:<HList!(Vel<Num,DIM>) as HMappable<Poly<HTypeFnToMapper< ChainFunc< MapToChange, ReverseFunc<MapFromMut>> >>> >::Output;
-	let a:bevy::ecs::world::Mut<'static,i32>;
+	// let a:bevy::ecs::world::Mut<'static,i32>;
 	// let b=MapDerefMut::call(&mut a);
 	// a.der
 	// let wat:<bevy::ecs::world::Mut<'static,i32> as std::ops::Dere>::Target;
@@ -461,10 +470,9 @@ pub fn collect_position_state_det_pos_momentum_change_vel_plugin<Num:RealField+C
 pub fn collect_angular_state_det_agi_agm_change_agv_plugin<Num,const DIM:usize>(app:&mut App)
 where
 	Num:RealField+Copy,
-	Const<DIM>: DimNameToSoDimName + DimName,
-	DefaultAllocator: Allocator<DimNameToSoDimNameType<DIM>, DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>+Allocator<DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>,
-    DimNameToSoDimNameType<DIM>:
-        DimMin<DimNameToSoDimNameType<DIM>, Output = DimNameToSoDimNameType<DIM>>,
+	Const<DIM>: DimToSoDim + DimName,
+	DefaultAllocator: AllocatorSyncVMSq<ConstDimToSoDimT<DIM>,Num>,
+    ConstDimToSoDimT<DIM>:DimSquare,
 {
 	app.add_systems(schedule_apply_change(), to_collect_change_system_with_processing(collect_angular_state_det_agi_agm_change_agv::<Num,DIM>));
 }
@@ -472,18 +480,16 @@ where
 pub struct CalculateSystemsPlugins<Num,const DIM:usize>(pub PhantomData<[Num;DIM]>)
 where
 	Num:RealField+Copy,
-	Const<DIM>: DimNameToSoDimName + DimName + DimMin<Const<DIM>, Output = Const<DIM>>,
-	DefaultAllocator: Allocator<DimNameToSoDimNameType<DIM>, DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>+Allocator<DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>,
-    DimNameToSoDimNameType<DIM>:
-        DimMin<DimNameToSoDimNameType<DIM>, Output = DimNameToSoDimNameType<DIM>>,;
+	Const<DIM>: DimToSoDim + DimName,
+	DefaultAllocator: AllocatorSyncVMSq<ConstDimToSoDimT<DIM>,Num>,
+    ConstDimToSoDimT<DIM>:DimSquare;
 
 impl<Num,const DIM:usize> Default for CalculateSystemsPlugins<Num,DIM>
 where
 	Num:RealField+Copy,
-	Const<DIM>: DimNameToSoDimName + DimName + DimMin<Const<DIM>, Output = Const<DIM>>,
-	DefaultAllocator: Allocator<DimNameToSoDimNameType<DIM>, DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>+Allocator<DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>,
-    DimNameToSoDimNameType<DIM>:
-        DimMin<DimNameToSoDimNameType<DIM>, Output = DimNameToSoDimNameType<DIM>>
+	Const<DIM>: DimToSoDim + DimName,
+	DefaultAllocator: AllocatorSyncVMSq<ConstDimToSoDimT<DIM>,Num>,
+    ConstDimToSoDimT<DIM>:DimSquare,
 {
 	fn default() -> Self {
 		Self(Default::default())
@@ -493,10 +499,9 @@ where
 impl<Num,const DIM:usize> PluginGroup for CalculateSystemsPlugins<Num,DIM> 
 where
 	Num:RealField+Copy,
-	Const<DIM>: DimNameToSoDimName + DimName + DimMin<Const<DIM>, Output = Const<DIM>>,
-	DefaultAllocator: Allocator<DimNameToSoDimNameType<DIM>, DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>+Allocator<DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>,
-    DimNameToSoDimNameType<DIM>:
-        DimMin<DimNameToSoDimNameType<DIM>, Output = DimNameToSoDimNameType<DIM>>,
+	Const<DIM>: DimToSoDim + DimName + DimSquare,
+	DefaultAllocator: AllocatorSyncVMSq<ConstDimToSoDimT<DIM>,Num>,
+    ConstDimToSoDimT<DIM>:DimSquare,
 {
 	fn build(self) -> PluginGroupBuilder {
 		// let dwa:fn(&mut App)=calculate_position_state_plugin::<Num,DIM>;
@@ -506,6 +511,7 @@ where
 			.add(calculate_angular_state_plugin::<Num,DIM>)
 			.add(calculate_vel_var_plugin::<Num,DIM>)
 			.add(calculate_density_plugin::<Num>)
+			.add(calculate_rotation_matrix_plugin::<Num,DIM>)
 			.add(collect_position_state_det_pos_momentum_change_vel_plugin::<Num,DIM>)
 			.add(collect_angular_state_det_agi_agm_change_agv_plugin::<Num,DIM>)
 			.add(spawn_stat_apply_change_system_plugin::<Num,DIM>)
@@ -518,10 +524,9 @@ where
 pub fn spawn_stat_apply_change_system_plugin<Num,const DIM:usize>(app:&mut App)
 where 
 	Num:RealField+Copy,
-	Const<DIM>: DimNameToSoDimName + DimName + DimMin<Const<DIM>, Output = Const<DIM>>,
-	DefaultAllocator: Allocator<DimNameToSoDimNameType<DIM>, DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>+Allocator<DimNameToSoDimNameType<DIM>,Buffer<Num>:Sync+Send>,
-    DimNameToSoDimNameType<DIM>:
-        DimMin<DimNameToSoDimNameType<DIM>, Output = DimNameToSoDimNameType<DIM>>,
+	Const<DIM>: DimToSoDim + DimName,
+	DefaultAllocator: AllocatorSyncVMSq<ConstDimToSoDimT<DIM>,Num>,
+    ConstDimToSoDimT<DIM>:DimSquare,
 {
 	let cfgsh=
 	default::<
@@ -530,7 +535,7 @@ where
 		HZip<
 			PhyBodyStatisticBundleDetermining<Num,DIM>,
 			_>,
-			HTypeMapP<PhyBodyStatisticBundleDetermining<Num,DIM>,TypeFnAsPhantomFn<ChainFunc<MapToDetermining,MapToWith>>>
+			HTypeMapP<PhyBodyStatisticBundleDetermining<Num,DIM>,ChainFunc<MapToDetermining,MapToWith>>
 		>,
 		MapToPhantom>
 	>()

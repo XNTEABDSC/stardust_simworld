@@ -1,9 +1,10 @@
 use bevy::{ecs::bundle::Bundle, utils::default};
 use frunk::{HList, Poly, hlist,hlist::Plucker, hlist_pat};
 use nalgebra::{Const, DefaultAllocator, DimMin, DimName, RealField, allocator::Allocator};
-use physics_basic::{body::{PhyBodyBasic, PhyBodyBasicStat, ShapeSphere, calculate_angular_state, calculate_body_state_full, calculate_position_state}, rotation::{DimNameToSoDimName, DimNameToSoDimNameType}, stat_to_change_type::{HMapStatToChangeTypeZ, MapStatToChangeTypeZ}};
+use num_traits::Zero;
+use physics_basic::{body::{PhyBodyBasic, PhyBodyBasicStat, ShapeSphere, calculate_angular_state, calculate_body_state_full, calculate_position_state}, stat_to_change_type::{HMapStatToChangeTypeZ, MapStatToChangeTypeZ}};
 use wacky_bag_hlist::{h_list_helpers::{HMapP, HZip, MapToPhantom}, type_fn::MapPhantomType};
-use wacky_bag_bevy::utils::stat_for_hlist::{MapToChange, MapToDetermining, MapToStat};
+use wacky_bag_bevy::{stat_component::stat::Stat, utils::stat_for_hlist::{MapToChange, MapToDetermining, MapToStat}};
 use physics_basic::stats::*;
 use physics_basic::rotation::*;
 use statistic_physics::{formulas::{calculate_density, calculate_vel_var}, stats::*};
@@ -12,11 +13,10 @@ use statistic_physics::{formulas::{calculate_density, calculate_vel_var}, stats:
 pub fn phy_body_bundle<Num,const DIM:usize>(basics:PhyBodyBasic<Num,DIM>)
 	->impl Bundle
 where 
-	Num:RealField+Copy+Default,
-	Const<DIM>: DimNameToSoDimName + DimName + DimMin<Const<DIM>,Output = Const<DIM>>,
-	DefaultAllocator: Allocator<DimNameToSoDimNameType<DIM>, DimNameToSoDimNameType<DIM>, Buffer<Num> :Send+Sync >+Allocator<DimNameToSoDimNameType<DIM>>,
-    DimNameToSoDimNameType<DIM>:
-        DimMin<DimNameToSoDimNameType<DIM>, Output = DimNameToSoDimNameType<DIM>>,
+	Num:RealField+Copy,
+	Const<DIM>: DimSquareSo,
+	DefaultAllocator: Allocator<ConstDimToSoDimT<DIM>, ConstDimToSoDimT<DIM>, Buffer<Num> :Send+Sync >+Allocator<ConstDimToSoDimT<DIM>, Buffer<Num> :Send+Sync>,
+    ConstDimToSoDimT<DIM>:DimSquare,
 {
 	let stat_matters_full=calculate_body_state_full(basics).map(Poly(MapToStat));
 	let matters_determing:HMapP<PhyBodyBasicStat<Num,DIM>,MapToDetermining>=default();
@@ -30,7 +30,6 @@ where
 			>,MapStatToChangeTypeZ
 		>,MapPhantomType>,MapToChange>=
 		default();
-		
 	(stat_matters_full+matters_determing+matters_change).into_tuple2()
 }
 
@@ -59,11 +58,10 @@ pub type PhyBodyStatisticBundleDetermining<Num,const DIM:usize>=HList!(
 pub fn phy_body_statistic_bundle<Num,const DIM:usize>(stats:PhyBodyStatisticBundleStats<Num,DIM>)
 ->impl Bundle
 where 
-	Num:RealField+Copy+Default,
-	Const<DIM>: DimNameToSoDimName + DimName,
-	DefaultAllocator: Allocator<DimNameToSoDimNameType<DIM>, DimNameToSoDimNameType<DIM>, Buffer<Num> :Send+Sync >+Allocator<DimNameToSoDimNameType<DIM>>,
-    DimNameToSoDimNameType<DIM>:
-        DimMin<DimNameToSoDimNameType<DIM>, Output = DimNameToSoDimNameType<DIM>>,
+	Num:RealField+Copy,
+	Const<DIM>: DimSquareSo,
+	DefaultAllocator: Allocator<ConstDimToSoDimT<DIM>, ConstDimToSoDimT<DIM>, Buffer<Num> :Send+Sync >+Allocator<ConstDimToSoDimT<DIM>, Buffer<Num> :Send+Sync>,
+    ConstDimToSoDimT<DIM>:DimSquare,
 {
 	// let stats=h_extend_by_fn_ref(stats, calculate_position_state);
 	let stats=calculate_position_state(stats.to_ref().sculpt().0)+stats;

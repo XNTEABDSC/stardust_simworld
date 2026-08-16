@@ -2,7 +2,7 @@ use bevy::ecs::system::{Query, Res};
 use frunk::Poly;
 use log::info;
 use nalgebra::{Const, DefaultAllocator, DimName, RealField, allocator::Allocator};
-use physics_basic::rotation::{DimNameToSoDimName, DimNameToSoDimNameType};
+use physics_basic::rotation::{AllocatorSyncVMSq, ConstDimToSoDimT, DimSquare, DimToSoDim};
 use statistic_physics::formulas::{InteractGasCellBodyBodyChange, InteractGasCellBodyBodyMatters, interact_gas_cell_body_simple};
 use wacky_bag_hlist::{h_list_helpers::{HMapP, HToRef, MapRef, Sum}, output_map::HMappableFrom, chain_fn::ChainFunc};
 use wacky_bag_bevy::utils::{h_list_query_data_old::HQueryData, stat_for_hlist::{HChangeAdd, MapFromStatRef, MapToChange, MapToStat}};
@@ -22,10 +22,8 @@ pub fn interact_grid_gas_body<Num,const DIM:usize>(q:Query<(&AtGridCellGas<Num,D
 )
 where 
 	Num:RealField+Copy,
-    Const<DIM>: DimNameToSoDimName + DimName,
-    DefaultAllocator: 
-		Allocator<DimNameToSoDimNameType<DIM>>
-        + Allocator<DimNameToSoDimNameType<DIM>, DimNameToSoDimNameType<DIM>, Buffer<Num>:Send+Sync >,
+    Const<DIM>: DimToSoDim + DimName,
+    DefaultAllocator: AllocatorSyncVMSq<ConstDimToSoDimT<DIM>,Num>,
 {
 
 	let dt=time.second_per_frame;
