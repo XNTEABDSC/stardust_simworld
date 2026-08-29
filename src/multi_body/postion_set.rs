@@ -1,4 +1,4 @@
-use bevy::{app::App, ecs::{query::ROQueryItem, schedule::{IntoScheduleConfigs, ScheduleConfigs}, system::{Query, ScheduleSystem, System}}};
+use bevy::{app::App, ecs::{query::{QueryItem, ROQueryItem}, schedule::{IntoScheduleConfigs, ScheduleConfigs}, system::{Query, ScheduleSystem, System}}};
 use bevy_ecs_macros::Component;
 use frunk::HList;
 use nalgebra::{Const, DefaultAllocator, RealField, allocator::Allocator};
@@ -43,13 +43,13 @@ where Const<DIM>:DimToSoDim,DefaultAllocator:Allocator<ConstDimToSoDimT<DIM>,Buf
 	// );
 
 	type Data =(
-		&'static CacheSet<Stat<Pos<Num,DIM>>>,
-		&'static CacheSet<Stat<Rotation<Num,DIM>>>,
+		&'static mut Stat<Pos<Num,DIM>>,
+		&'static mut Stat<Rotation<Num,DIM>>,
 		Option<&'static AttachToPos<Num,DIM>>,
 		Option<&'static AttachToRotation<Num,DIM>>,
 	);
 
-	fn from_data<'w,'s>(values:&ROQueryItem<'w,'s,Self::DataBegin>)->Self {
+	fn from_data<'w,'s>(values:&QueryItem<'w,'s,Self::DataBegin>)->Self {
 		Self{
 			pos:values.0.0,
 			rot:values.1.0,
@@ -76,9 +76,9 @@ where Const<DIM>:DimToSoDim,DefaultAllocator:Allocator<ConstDimToSoDimT<DIM>,Buf
 pub fn propagate_position_rotation_system<Num:RealField+Copy,const DIM:usize>()->ScheduleConfigs<ScheduleSystem>{
 	propagate_root_to_leaf::<PropagatePositionRotation<Num,DIM>,AttachTo>.into_configs()
 	.config_processing::<
-		HList!(Determining<Pos<Num,DIM>>,Determining<Rotation<Num,DIM>>,AttachToPos<Num,DIM>,AttachToRotation<Num,DIM>),
-		HList!(PropagatePositionRotation<Num,DIM>),
-		HList!(CacheSet<Stat<Pos<Num,DIM>>>,CacheSet<Stat<Rotation<Num,DIM>>>)
+		HList!(AttachToPos<Num,DIM>,AttachToRotation<Num,DIM>),
+		HList!(PropagatePositionRotation<Num,DIM>,Stat<Pos<Num,DIM>>),
+		HList!(Stat<Rotation<Num,DIM>>)
 	>()
 }
 

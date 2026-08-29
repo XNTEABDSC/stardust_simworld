@@ -4,8 +4,8 @@ use bevy::{app::App, ecs::{schedule::{IntoScheduleConfigs, ScheduleConfigs}, sys
 use frunk::{HList, Poly};
 use nalgebra::{Const, DefaultAllocator, DimMin, DimName, RealField, allocator::Allocator};
 use num_traits::Zero;
-use physics_basic::{ rotation::{AllocatorSyncVMSq, AllocatorVMSq, ConstDimToSoDimT, DimSquare, DimToSoDim}, stat_to_change_type::{HMapStatToChangeTypeZ, MapStatToChangeTypeZ}};
-use wacky_bag_hlist::{impl_func_clause, h_list_helpers::{HMapP, MapToPhantom}};
+use physics_basic::{ rotation::{AllocatorSyncVMSq, AllocatorVM, ConstDimToSoDimT, DimSquare, DimToSoDim}, stat_to_change_type::{HMapStatToChangeTypeZ, MapStatToChangeTypeZ}};
+use wacky_bag_hlist::{impl_func_closure, h_list_helpers::{HMapP, MapToPhantom}};
 use wacky_bag_bevy::{stat_component::change::Change, system::{processing_system::ScheduleConfigsProcessing, propagate_relationship::{PropagateChangeLeafToRoot, propagate_leaf_to_root}}};
 
 use crate::{multi_body::attach::AttachTo, physics::bundle::PhyBodyStatisticBundleDetermining, schedule::schedule_apply_change};
@@ -52,14 +52,14 @@ where
 		HMapP<HMapStatToChangeTypeZ<PhyBodyStatisticBundleDetermining<Num,DIM>,_>,MapToPhantom>
 	>();
 	let cfgsh=dwa.map(Poly(
-		impl_func_clause!(<T>{where T:Send+Sync+AddAssign+'static+Zero}:(PhantomData<T>)->(ScheduleConfigs<ScheduleSystem>)
+		impl_func_closure!(<T>{where T:Send+Sync+AddAssign+'static+Zero}:(PhantomData<T>)->(ScheduleConfigs<ScheduleSystem>)
 		|_a|{
 			change_propagate_leaf_to_root_system_cfg::<T>()
 		}
 	)
 	));
 	cfgsh.foldl(
-		Poly(impl_func_clause!(<'a>:((&'a mut App,ScheduleConfigs<ScheduleSystem>))->(&'a mut App) 
+		Poly(impl_func_closure!(<'a>:((&'a mut App,ScheduleConfigs<ScheduleSystem>))->(&'a mut App) 
 			|(app,s)|{app.add_systems(schedule_apply_change(),s)}
 		)), 
 		app
