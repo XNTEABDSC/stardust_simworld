@@ -72,3 +72,6 @@ impl RelationshipTarget for AttachedEntities{
 	}
 }
 
+
+#[derive(Debug,Component,Default,Clone, Copy)]
+pub struct AttachToWith<T>(pub T);

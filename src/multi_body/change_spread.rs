@@ -53,10 +53,10 @@ where
 	>();
 	let cfgsh=dwa.map(Poly(
 		impl_func_closure!(<T>{where T:Send+Sync+AddAssign+'static+Zero}:(PhantomData<T>)->(ScheduleConfigs<ScheduleSystem>)
-		|_a|{
-			change_propagate_leaf_to_root_system_cfg::<T>()
-		}
-	)
+			|_a|{
+				change_propagate_leaf_to_root_system_cfg::<T>()
+			}
+		)
 	));
 	cfgsh.foldl(
 		Poly(impl_func_closure!(<'a>:((&'a mut App,ScheduleConfigs<ScheduleSystem>))->(&'a mut App) 
