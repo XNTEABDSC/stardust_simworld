@@ -31,7 +31,7 @@ impl<Num: RealField + Copy, const DIM: usize> Copy for PropagatePositionRotation
 where Const<DIM>:DimToSoDim,DefaultAllocator:Allocator<ConstDimToSoDimT<DIM>,Buffer<Num>:Copy>
 {
 }
- 
+
 impl<Num:RealField+Copy,const DIM:usize> PropagateRootToLeafMut<AttachTo> for PropagatePositionRotation<Num,DIM>
 where Const<DIM>:DimToSoDim+DimSquare,DefaultAllocator:Allocator<ConstDimToSoDimT<DIM>,Buffer<Num> : Send+Sync+Copy>
 {
