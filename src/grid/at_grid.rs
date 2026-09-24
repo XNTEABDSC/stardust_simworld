@@ -1,5 +1,5 @@
-use bevy::{app::App, ecs::{schedule::IntoScheduleConfigs, system::{Query, Res}}, reflect::Reflect};
-use bevy_ecs_macros::Component;
+use bevy::{app::App, ecs::{component::Component, schedule::IntoScheduleConfigs, system::{Query, Res}}, reflect::Reflect};
+
 use frunk::{HList, HNil};
 use nalgebra::RealField;
 use physics_basic::stats::Pos;

@@ -4,20 +4,19 @@ use log::info;
 use nalgebra::{Const, DefaultAllocator, DimName, RealField, allocator::Allocator};
 use physics_basic::rotation::{AllocatorSyncVMSq, ConstDimToSoDimT, DimSquare, DimToSoDim};
 use statistic_physics::formulas::{InteractGasCellBodyBodyChange, InteractGasCellBodyBodyMatters, interact_gas_cell_body_simple};
-use wacky_bag_hlist::{h_list_helpers::{HMapP, HToRef, MapRef, Sum}, output_map::HMappableFrom, chain_fn::ChainFunc};
+use wacky_bag_hlist::{chain_fn::ChainFunc, h_list_helpers::{HMapP, HToRef, MapRef, Sum}, output_map::HMappableFrom, variadics_tuple::{ToVariadicsTuple, VariadicsTupleToHlist}};
 use wacky_bag_bevy::utils::{h_list_query_data_old::HQueryData, stat_for_hlist::{HChangeAdd, MapFromStatRef, MapToChange, MapToStat}};
 
 use crate::{grid_gas::at_grid_gas::AtGridCellGas, simulate_speed::simulate_speed::SimulateSpeed};
 
 
-pub fn interact_grid_gas_body<Num,const DIM:usize>(q:Query<(&AtGridCellGas<Num,DIM>, HQueryData< 
-	HToRef<
+pub fn interact_grid_gas_body<Num,const DIM:usize>(q:Query<(&AtGridCellGas<Num,DIM>, 
+	< HToRef<
 		Sum<
 			HMapP<InteractGasCellBodyBodyMatters<Num,DIM>,MapToStat>,
 			HMapP<InteractGasCellBodyBodyChange<Num,DIM>,MapToChange>
 		>
-	> 
-	>)>,
+	> as ToVariadicsTuple>::Output)>,
 	time:Res<SimulateSpeed<Num>>
 )
 where 
@@ -29,6 +28,8 @@ where
 	let dt=time.second_per_frame;
 	
 	q.par_iter().for_each(|(gas_c,b_stats)|{
+
+		let b_stats=b_stats.to_hlist();
 
 		let gas=gas_c.0.to_ref();
 

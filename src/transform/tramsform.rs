@@ -1,9 +1,9 @@
 
-use bevy::{app::{App, Update}, ecs::{change_detection::{DetectChanges, DetectChangesMut}, system::{Query, Res}}, math::{Mat3, Quat, Vec3}, reflect::Reflect, time::{Fixed, Time}, transform::components::Transform};
-use bevy_ecs_macros::Resource;
+use bevy::{app::{App, Update}, ecs::{resource::Resource, system::{Query, Res}}, math::{Mat3, Quat, Vec3}, reflect::Reflect, time::{Fixed, Time}, transform::components::Transform};
+
 use nalgebra::{Const, Matrix, RealField, Storage};
-use physics_basic::{rotation::{AngularVel, Rotation, RotationMatrix}, stats::TimePass};
-pub use physics_basic::stats::{Pos,Vel,DirVec};
+use physics_basic::{rotation::{AngularVel, RotationMatrix}, stats::TimePass};
+use physics_basic::stats::{Pos,Vel};
 use simba::scalar::SupersetOf;
 use wacky_bag_bevy::stat_component::stat::Stat;
 #[derive(Resource,Debug,Clone, Copy,Reflect)]

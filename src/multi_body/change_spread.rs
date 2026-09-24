@@ -1,14 +1,14 @@
 use std::{marker::PhantomData, ops::AddAssign} ;
 
-use bevy::{app::App, ecs::{schedule::{IntoScheduleConfigs, ScheduleConfigs}, system::ScheduleSystem}, utils::default} ;
+use bevy::{app::App, ecs::{query::ROQueryItem, relationship::Relationship, schedule::{IntoScheduleConfigs, ScheduleConfigs}, system::{ScheduleSystem, SystemParamItem}}, utils::default} ;
 use frunk::{HList, Poly};
 use nalgebra::{Const, DefaultAllocator, DimMin, DimName, RealField, allocator::Allocator};
 use num_traits::Zero;
-use physics_basic::{ rotation::{AllocatorSyncVMSq, AllocatorVM, ConstDimToSoDimT, DimSquare, DimToSoDim}, stat_to_change_type::{HMapStatToChangeTypeZ, MapStatToChangeTypeZ}};
+use physics_basic::{ rotation::{AllocatorSyncVMSq, AllocatorVM, AngularMomentum, ConstDimToSoDimT, DimSquare, DimToSoDim, angular_momentum_from_momentum_pos}, stat_to_change_type::{HMapStatToChangeTypeZ, MapStatToChangeTypeZ}, stats::Momentum};
 use wacky_bag_hlist::{impl_func_closure, h_list_helpers::{HMapP, MapToPhantom}};
-use wacky_bag_bevy::{stat_component::change::Change, system::{processing_system::ScheduleConfigsProcessing, propagate_relationship::{PropagateChangeLeafToRoot, propagate_leaf_to_root}}};
+use wacky_bag_bevy::{stat_component::change::Change, system::{processing_system::ScheduleConfigsProcessing, propagate_relationship::{PropagateChangeLeafToRoot, PropagateLeafToRoot, PropagateLeafToRootApplySysParam, PropagateLeafToRootFromSysParam, propagate_leaf_to_root}}, utils::system_param_with_query::{SystemParamWithQuery, SystemParamWithQueryMergeT, SystemParamWithQueryT}};
 
-use crate::{multi_body::attach::AttachTo, physics::bundle::PhyBodyStatisticBundleDetermining, schedule::schedule_apply_change};
+use crate::{multi_body::{attach::AttachTo, propagate_position::AttachToPos}, physics::bundle::PhyBodyStatisticBundleDetermining, schedule::schedule_apply_change};
 
 // pub fn change_propagate_leaf_to_root<T>(
 // 	ps:ParamSet<(
@@ -29,8 +29,86 @@ use crate::{multi_body::attach::AttachTo, physics::bundle::PhyBodyStatisticBundl
 // 	propagate_leaf_to_root::<PropagateChangeLeafToRoot<T>,AttachTo>(ps, update_sources_set, update_tasks);
 // }
 
-pub fn change_propagate_leaf_to_root_system_cfg<T>()->ScheduleConfigs<ScheduleSystem>
-where T:Send+Sync+AddAssign+'static+Zero{
+pub struct PropagateMomentum<Num,const DIM:usize>
+where 
+	Num:RealField+Copy,
+	Const<DIM>: DimToSoDim + DimName + DimSquare,
+	DefaultAllocator: 
+		AllocatorSyncVMSq<ConstDimToSoDimT<DIM>,Num>
+{
+	m:Momentum<Num,DIM>, agm: AngularMomentum<Num,DIM>
+}
+
+impl<Num,const DIM:usize,R:Relationship> PropagateLeafToRoot<R> for PropagateMomentum<Num,DIM> 
+where 
+	Num:RealField+Copy,
+	Const<DIM>: DimToSoDim + DimName + DimSquare,
+	DefaultAllocator: 
+		AllocatorSyncVMSq<ConstDimToSoDimT<DIM>,Num>,
+{
+	type FromSysParam=SystemParamWithQueryT<
+		(&'static Change<Momentum<Num,DIM>>, &'static Change<AngularMomentum<Num,DIM>>, &'static AttachToPos<Num,DIM>),
+		(),
+		()
+	>;
+
+	fn from_data(
+			values: 
+				ROQueryItem<
+					<SystemParamWithQueryMergeT<PropagateLeafToRootFromSysParam<R>, Self::FromSysParam> as SystemParamWithQuery>::D
+				>,
+			_others:
+				&SystemParamItem<
+					<SystemParamWithQueryMergeT<PropagateLeafToRootFromSysParam<R>, Self::FromSysParam> as SystemParamWithQuery>::P
+				>
+		)->Self {
+		let m=values.1.0.get_and_reset_ref();
+		let agm = values.1.1.get_and_reset_ref();
+		let ofs=values.1.2.0;
+		Self { agm: agm+angular_momentum_from_momentum_pos(&ofs, &m),m: m }
+	}
+
+	type ApplySysParam=SystemParamWithQueryT<
+		(&'static Change<Momentum<Num,DIM>>, &'static Change<AngularMomentum<Num,DIM>>),
+		(),
+		()
+	>;
+
+	fn apply_to_data(
+			self,
+			values:
+				ROQueryItem<
+					<SystemParamWithQueryMergeT<PropagateLeafToRootApplySysParam<R>, Self::ApplySysParam> as SystemParamWithQuery>::D
+				>,
+			//SystemParamWithQueryROItem<'w,'s,SPQMerge<PropagateLeafToRootApplySysParam<R>, Self::ApplySysParam>>,
+			_others:
+				&SystemParamItem<
+					<SystemParamWithQueryMergeT<PropagateLeafToRootApplySysParam<R>, Self::ApplySysParam> as SystemParamWithQuery>::P
+				>
+		) {
+		values.1.0.add_change(self.m);
+		values.1.1.add_change(self.agm);
+	}
+}
+
+pub fn momentum_change_propagate_leaf_to_root_system_cfg<Num,const DIM:usize>()->ScheduleConfigs<ScheduleSystem>
+where 
+	Num:RealField+Copy,
+	Const<DIM>: DimToSoDim + DimName + DimSquare,
+	DefaultAllocator: 
+		AllocatorSyncVMSq<ConstDimToSoDimT<DIM>,Num>,
+{
+	propagate_leaf_to_root::<PropagateMomentum<Num,DIM>,AttachTo>.into_configs()
+	.config_processing::<
+		HList!(),
+		HList!(Change<Momentum<Num,DIM>>,Change<AngularMomentum<Num,DIM>>),
+		HList!()
+	>()
+}
+
+pub fn all_change_propagate_leaf_to_root_system_cfg<T>()->ScheduleConfigs<ScheduleSystem>
+where T:Send+Sync+AddAssign+'static+Zero
+{
 	propagate_leaf_to_root::<PropagateChangeLeafToRoot<T>,AttachTo>.into_configs()
 	.config_processing::<
 		HList!(),
@@ -39,7 +117,7 @@ where T:Send+Sync+AddAssign+'static+Zero{
 	>()
 }
 
-pub fn change_propagate_leaf_to_root_plugin<Num,const DIM:usize>(app:&mut App)
+pub fn all_change_propagate_leaf_to_root_plugin<Num,const DIM:usize>(app:&mut App)
 where 
 	Num:RealField+Copy,
 	Const<DIM>: DimToSoDim + DimName + DimSquare,
@@ -54,7 +132,7 @@ where
 	let cfgsh=dwa.map(Poly(
 		impl_func_closure!(<T>{where T:Send+Sync+AddAssign+'static+Zero}:(PhantomData<T>)->(ScheduleConfigs<ScheduleSystem>)
 			|_a|{
-				change_propagate_leaf_to_root_system_cfg::<T>()
+				all_change_propagate_leaf_to_root_system_cfg::<T>()
 			}
 		)
 	));

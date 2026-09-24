@@ -1,6 +1,6 @@
 
 use bevy::{app::App, ecs::{entity::Entity, schedule::IntoScheduleConfigs, system::{ParallelCommands, Query, Res}}, log::warn, reflect::Reflect};
-use bevy_ecs_macros::Component;
+use bevy::ecs::component::Component;
 use frunk::{HList, HNil, Poly};
 use nalgebra::RealField;
 use statistic_physics::matters::MattersBasicStat;

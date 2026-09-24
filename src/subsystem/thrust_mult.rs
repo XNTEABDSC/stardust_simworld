@@ -12,14 +12,14 @@ use wacky_bag_hlist::{h_list_helpers::{FoldApply, HMapP, MapToPhantom}, impl_fun
 
 use crate::grid_gas::at_grid_gas::AtGridCellGas;
 
-#[derive(Debug,Reflect,Component)]
+#[derive(Debug,Reflect)]
 pub struct ThrustDef<Num>{
     pub output_speed:Num,
     pub output_speed_sq:Num,
     pub max_power:Num,
 }
 
-#[derive(Debug,Reflect,Clone, Copy,Component)]
+#[derive(Debug,Reflect,Clone, Copy)]
 pub struct ThrustControl<Num>{
     pub power:Num
 }
@@ -27,9 +27,10 @@ pub struct ThrustControl<Num>{
 pub struct ThrustControlMsg<Num>{
     pub control:ThrustControl<Num>,
     pub e:Entity,
+    pub idx:usize,
 }
 
-#[derive(Debug,Reflect,Component)]
+#[derive(Debug,Reflect)]
 pub struct ThrustState<Num>{
     pub power:Num,
     pub mass_per_t:Num,
@@ -55,7 +56,7 @@ where Num:RealField+Copy
     }
 }
 
-pub fn thrust_control<Num>(mut mr:MessageReader<ThrustControlMsg<Num>>,mut q:Query<(&mut ThrustDef<Num>,&mut ThrustState<Num>)>)
+pub fn thrust_control<Num>(mut mr:MessageReader<ThrustControlMsg<Num>>,mut q:Query<(&mut VecComponent<(ThrustDef<Num>,ThrustState<Num>)>,)>)
 where Num:Sync+Send+'static+Copy+RealField
 {
     mr.read().for_each(|m|{
@@ -63,24 +64,24 @@ where Num:Sync+Send+'static+Copy+RealField
             error!("entity {} not exist",m.e);
             return;
         };
-        // let Some(t)=c.0.get_mut(m.idx) else {
-        //     error!("entity {} dont have thrust id {}",m.e,m.idx);
-        //     return;
-        // };
-        *c.1=calc_thrust(&c.0, &m.control);
+        let Some(t)=c.0.get_mut(m.idx) else {
+            error!("entity {} dont have thrust id {}",m.e,m.idx);
+            return;
+        };
+        t.1=calc_thrust(&t.0, &m.control);
     });
 }
 
 pub fn thrust_active<Num,const DIM:usize>(q:Query< 
     (
-        (&ThrustDef<Num>,&ThrustState<Num>),  
+        &VecComponent<(ThrustDef<Num>,ThrustState<Num>)>,  
         &Stat<RotationMatrix<Num,DIM>>, &Change<Momentum<Num,DIM>>, &Stat<Vel<Num,DIM>>, &Stat<TimePass<Num>>, 
         &AtGridCellGas<Num,DIM>
 ) >)
 where Num:Sync+Send+'static+Copy+RealField,
     Const<DIM>:DimToSoDim+DimName,
 {
-    q.par_iter().for_each(|(t,r,m,v,time,agcg)|{
+    q.par_iter().for_each(|(ts,r,m,v,time,agcg)|{
         
         let onevec=OVector::<Num,Const<DIM>>::from_fn(
             move |v,_|
@@ -94,14 +95,16 @@ where Num:Sync+Send+'static+Copy+RealField,
             Poly(impl_func_closure!(<T>{where T:num_traits::Zero}:(PhantomData<T>)->(T)|_|T::zero()))
         );
 
-        m.add_change(Momentum(dir*(t.1.force*dt)));
-        let dm=Mass(t.1.mass_per_t*dt);
-        let dmv=Vel(v.0.0 - dir*(t.0.output_speed));
-        let dmm=mass_vel_2_momentum(hlist![&dm,&dmv]).head;
-        let dmk=Energy(mass_vel_2_kinetic(hlist![&dm,&dmv]).head.0);
-        (&mut matters_sum).to_mut().zip(hlist![dm,dmm,dmk]).map(Poly(
-            impl_func_closure!(<'a,T>{where T:AddAssign}: ((&'a mut T,T)) |(a,b)|*a+=b)
-        ));
+        for t in &ts.0 {
+            m.add_change(Momentum(dir*(t.1.force*dt)));
+            let dm=Mass(t.1.mass_per_t*dt);
+            let dmv=Vel(v.0.0 - dir*(t.0.output_speed));
+            let dmm=mass_vel_2_momentum(hlist![&dm,&dmv]).head;
+            let dmk=Energy(mass_vel_2_kinetic(hlist![&dm,&dmv]).head.0);
+            (&mut matters_sum).to_mut().zip(hlist![dm,dmm,dmk]).map(Poly(
+                impl_func_closure!(<'a,T>{where T:AddAssign}: ((&'a mut T,T)) |(a,b)|*a+=b)
+            ));
+        }
         matters_sum.zip( agcg.0.to_ref().sculpt().0 ).map(Poly(HChangeAdd));
     });
 }

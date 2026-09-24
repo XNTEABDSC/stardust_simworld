@@ -1,7 +1,6 @@
-use std::marker::PhantomData;
 
-use bevy::{ecs::{entity::Entity, lifecycle::HookContext, relationship::{Relationship, RelationshipTarget}, world::DeferredWorld}, utils::default};
-use bevy_ecs_macros::Component;
+use bevy::ecs::{entity::Entity, relationship::{Relationship, RelationshipTarget}};
+use bevy::ecs::component::Component;
 
 
 #[derive(Debug,Component)]
