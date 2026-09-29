@@ -1,39 +1,20 @@
-use std::{any::Any, collections::HashMap, ops::{Deref, DerefMut}, sync::Arc};
+use std::{fmt::Debug, sync::{Arc, Mutex}};
 
+use bevy::ecs::{component::Component, entity::{Entity, EntityHash}};
+use dashmap::DashMap;
 
-// pub type AnyOnbject=Arc<>
+use crate::subsystem::dyn_object::DynObject;
 
-pub trait ControllerInterface {
-    fn get(&self,req:&str)->Option<&dyn Any>;
+// pub type EntityObject=(Entity,Option<DynObject>);
 
-    fn get_t<T:'static>(&self,req:&str)->Option<&T>{
-        self.get(req).and_then(|a|a.downcast_ref())
-    }
+pub trait Controller:Debug {
+	fn leaf_to_root_send   (&mut self,env:&mut Option<DynObject>,me:Entity)->Option<DynObject>;
+	fn leaf_to_root_receive(&mut self,env:&mut Option<DynObject>,me:Entity,leaf_data:(Entity,Option<DynObject>));
+	fn process     (&mut self,env:&mut Option<DynObject>,me:Entity);
 
-    fn get_mut(&mut self,req:&str)->Option<&mut dyn Any>;
-
-    fn get_t_mut<T:'static>(&mut self,req:&str)->Option<&mut T>{
-        self.get_mut(req).and_then(|a|a.downcast_mut())
-    }
-
-    fn set(&mut self,req:&str,v:Box<dyn Any>);
-
+	fn root_to_leaf_send   (&mut self,env:&mut Option<DynObject>,me:Entity)->Box<dyn FnMut(Entity)->Option<DynObject>>;
+	fn root_to_leaf_receive_send(&mut self,env:&mut Option<DynObject>,me:Entity,root_data:(Entity,Option<DynObject>))->Box<dyn FnMut(Entity)->Option<DynObject>>;
 }
+#[derive(Debug,Component)]
+pub struct DynController(pub Arc<Mutex<dyn Controller+Send+Sync>>);
 
-pub struct Controller{
-    pub v:HashMap<String,Box<dyn Any>>
-}
-
-impl ControllerInterface for Controller {
-    fn get(&self,req:&str)->Option<&dyn Any> {
-        return self.v.get(req).map(|v|v.deref());
-    }
-
-    fn get_mut(&mut self,req:&str)->Option<&mut dyn Any> {
-        return self.v.get_mut(req).map(|v|v.deref_mut());
-    }
-
-    fn set(&mut self,req:&str,v:Box<dyn Any>) {
-        self.v.insert(req.to_owned(), v);
-    }
-}

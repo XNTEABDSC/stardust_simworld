@@ -6,7 +6,7 @@ use nalgebra::{Const, DefaultAllocator, DimName, OVector, RealField, SVector, Sc
 use num_traits::Zero;
 use physics_basic::{rotation::{ConstDimToSoDimT, DimToSoDim, Rotation, RotationMatrix}, stats::{Energy, Mass, Momentum, Pos, TimePass, Vel, mass_vel_2_kinetic, mass_vel_2_momentum}};
 use statistic_physics::matters::MattersBasicStat;
-use wacky_bag_bevy::{component::vec_component::VecComponent, stat_component::{change::Change, stat::Stat}, utils::stat_for_hlist::{HChangeAdd, MapToChange}};
+use wacky_bag_bevy::{stat_component::{change::Change, stat::Stat}, utils::stat_for_hlist::HChangeAdd};
 use wacky_bag::utils::num_extend::NumExtends;
 use wacky_bag_hlist::{h_list_helpers::{FoldApply, HMapP, MapToPhantom}, impl_func_closure, output_map::HMappableFrom, reverse_func::ReverseFunc};
 
