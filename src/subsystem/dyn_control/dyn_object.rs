@@ -1,9 +1,9 @@
-use std::{any::Any, collections::{BTreeMap, HashMap}, fmt::Display, mem, ops::Index, sync::{Arc, Mutex}};
+use std::{any::Any, collections::{BTreeMap, HashMap}, fmt::Display, mem, ops::{Deref, Index}, sync::{Arc, Mutex}};
 
 use bevy::ecs::component::Component;
 use derive_more::From;
 
-use crate::subsystem::dyn_object::DynObject::{IMap, IVec, StrMap};
+use crate::subsystem::dyn_control::dyn_object::DynObject::{IMap, IVec, SMap};
 
 // #[derive(Debug,Clone)]
 // pub enum DynBasic {
@@ -41,7 +41,7 @@ pub enum DynObject{
 	// Box(Box<dyn Any>),
 	ArcMutex(Arc<Mutex<dyn Any+Send+Sync>>),
 	// WeakMutex(Weak<Mutex<dyn Any>>),
-	StrMap(HashMap<String,DynObject>),
+	SMap(HashMap<String,DynObject>),
 	IMap(HashMap<i64,DynObject>),
 	IVec(Vec<DynObject>)
 }
@@ -49,7 +49,7 @@ pub enum DynObject{
 impl DynObject {
 	pub fn table_get(&self,i:&DynObject)->Option<&DynObject> {
 		match self {
-			StrMap(m)=>{
+			SMap(m)=>{
 				match i {
 					DynObject::Str (s)=>{
 						m.get(s)
@@ -79,7 +79,7 @@ impl DynObject {
 
 	pub fn table_get_mut(&mut self,i:&DynObject)->Option<&mut DynObject> {
 		match self {
-			StrMap(m)=>{
+			SMap(m)=>{
 				match i {
 					DynObject::Str (s)=>{
 						m.get_mut(s)
@@ -109,7 +109,7 @@ impl DynObject {
 
 	pub fn table_insert(&mut self,k:DynObject,v:DynObject)->Option<DynObject>{
 		match self {
-			StrMap(m)=>{
+			SMap(m)=>{
 				match k {
 					DynObject::Str (k)=>{
 						m.insert(k,v)
@@ -140,7 +140,7 @@ impl DynObject {
 
 	pub fn table_remove(&mut self,k:&DynObject)->Option<DynObject>{
 		match self {
-			StrMap(m)=>{
+			SMap(m)=>{
 				match k {
 					DynObject::Str (k)=>{
 						m.remove(k)
@@ -171,7 +171,7 @@ impl DynObject {
 
 	pub fn table_iter<'a>(&'a self)->Option<Iter<'a>>{
 		match self {
-			StrMap(m) => Some(Iter::SMap(m.iter())),
+			SMap(m) => Some(Iter::SMap(m.iter())),
 			IMap(m) => Some(Iter::IMap(m.iter())),
 			IVec(m) => Some(Iter::IVec(m.iter().enumerate())),
 			_=>None
@@ -180,7 +180,7 @@ impl DynObject {
 
 	pub fn table_iter_mut<'a>(&'a mut self)->Option<IterMut<'a>>{
 		match self {
-			StrMap(m) => Some(IterMut::SMap(m.iter_mut())),
+			SMap(m) => Some(IterMut::SMap(m.iter_mut())),
 			IMap(m) => Some(IterMut::IMap(m.iter_mut())),
 			IVec(m) => Some(IterMut::IVec(m.iter_mut().enumerate())),
 			_=>None

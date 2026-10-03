@@ -14,9 +14,9 @@ use crate::grid_gas::at_grid_gas::AtGridCellGas;
 
 #[derive(Debug,Reflect,Component)]
 pub struct ThrustDef<Num>{
-    pub output_speed:Num,
-    pub output_speed_sq:Num,
-    pub max_power:Num,
+    output_speed:Num,
+    output_speed_sq:Num,
+    max_power:Num,
 }
 
 #[derive(Debug,Reflect,Clone, Copy,Component)]
@@ -31,9 +31,9 @@ pub struct ThrustControlMsg<Num>{
 
 #[derive(Debug,Reflect,Component)]
 pub struct ThrustState<Num>{
-    pub power:Num,
-    pub mass_per_t:Num,
-    pub force:Num,
+    power:Num,
+    mass_per_t:Num,
+    force:Num,
 }
 
 pub fn calc_thrust<Num>(def:&ThrustDef<Num>,control:&ThrustControl<Num>)->ThrustState<Num>
@@ -55,7 +55,7 @@ where Num:RealField+Copy
     }
 }
 
-pub fn thrust_control<Num>(mut mr:MessageReader<ThrustControlMsg<Num>>,mut q:Query<(&mut ThrustDef<Num>,&mut ThrustState<Num>)>)
+pub fn thrust_control<Num>(mut mr:MessageReader<ThrustControlMsg<Num>>,mut q:Query<&mut ThrustControl<Num>>)
 where Num:Sync+Send+'static+Copy+RealField
 {
     mr.read().for_each(|m|{
@@ -67,8 +67,16 @@ where Num:Sync+Send+'static+Copy+RealField
         //     error!("entity {} dont have thrust id {}",m.e,m.idx);
         //     return;
         // };
-        *c.1=calc_thrust(&c.0, &m.control);
+        *c=m.control;
     });
+}
+
+pub fn thrust_control_apply<Num>(mut q:Query<(&mut ThrustDef<Num>,&mut ThrustState<Num>,&ThrustControl<Num>)>)
+where Num:Sync+Send+'static+Copy+RealField
+{
+	q.par_iter_mut().for_each(|mut c|{
+		*c.1=calc_thrust(&c.0, c.2);
+	});
 }
 
 pub fn thrust_active<Num,const DIM:usize>(q:Query< 

@@ -4,9 +4,9 @@ use bevy::{app::App, ecs::{query::ROQueryItem, relationship::Relationship, sched
 use frunk::{HList, Poly};
 use nalgebra::{Const, DefaultAllocator, DimMin, DimName, RealField, allocator::Allocator};
 use num_traits::Zero;
-use physics_basic::{ rotation::{AllocatorSyncVMSq, AllocatorVM, AngularMomentum, ConstDimToSoDimT, DimSquare, DimToSoDim, angular_momentum_from_momentum_pos}, stat_to_change_type::{HMapStatToChangeTypeZ, MapStatToChangeTypeZ}, stats::Momentum};
+use physics_basic::{ rotation::{AllocatorSyncVMSq, AllocatorVM, AngularMomentum, ConstDimToSoDimT, DimSquare, DimToSoDim, angular_momentum_from_momentum_pos}, stat_to_change_type::{HMapStatToChangeTypeZ, MapStatToChangeTypeZ}, stats::{Momentum, Pos}};
 use wacky_bag_hlist::{impl_func_closure, h_list_helpers::{HMapP, MapToPhantom}};
-use wacky_bag_bevy::{stat_component::change::Change, system::{processing_system::ScheduleConfigsProcessing, propagate_relationship::{PropagateChangeLeafToRoot, PropagateLeafToRoot, PropagateLeafToRootApplySysParam, PropagateLeafToRootFromSysParam, propagate_leaf_to_root}}, utils::system_param_with_query::{SystemParamWithQuery, SystemParamWithQueryMergeT, SystemParamWithQueryT}};
+use wacky_bag_bevy::{stat_component::{change::Change, stat::Stat}, system::{processing_system::ScheduleConfigsProcessing, propagate_relationship::{PropagateChangeLeafToRoot, PropagateLeafToRoot, PropagateLeafToRootApplySysParam, PropagateLeafToRootFromSysParam, propagate_leaf_to_root}}, utils::system_param_with_query::{SystemParamWithQuery, SystemParamWithQueryMergeT, SystemParamWithQueryT}};
 
 use crate::{multi_body::{attach::AttachTo, propagate_position::AttachToPos}, physics::bundle::PhyBodyStatisticBundleDetermining, schedule::schedule_apply_change};
 
@@ -36,7 +36,9 @@ where
 	DefaultAllocator: 
 		AllocatorSyncVMSq<ConstDimToSoDimT<DIM>,Num>
 {
-	m:Momentum<Num,DIM>, agm: AngularMomentum<Num,DIM>
+	m:Momentum<Num,DIM>, 
+	agm: AngularMomentum<Num,DIM>,
+	src_pos:Pos<Num,DIM>
 }
 
 impl<Num,const DIM:usize,R:Relationship> PropagateLeafToRoot<R> for PropagateMomentum<Num,DIM> 
@@ -47,7 +49,12 @@ where
 		AllocatorSyncVMSq<ConstDimToSoDimT<DIM>,Num>,
 {
 	type FromSysParam=SystemParamWithQueryT<
-		(&'static Change<Momentum<Num,DIM>>, &'static Change<AngularMomentum<Num,DIM>>, &'static AttachToPos<Num,DIM>),
+		(
+			&'static Change<Momentum<Num,DIM>>, 
+			&'static Change<AngularMomentum<Num,DIM>>, 
+			// &'static AttachToPos<Num,DIM> no this is relative to parent, not world
+			&'static Stat<Pos<Num,DIM>>
+		),
 		(),
 		()
 	>;
@@ -64,12 +71,16 @@ where
 		)->Self {
 		let m=values.1.0.get_and_reset_ref();
 		let agm = values.1.1.get_and_reset_ref();
-		let ofs=values.1.2.0;
-		Self { agm: agm+angular_momentum_from_momentum_pos(&ofs, &m),m: m }
+		let pos=values.1.2.0;
+		Self { agm: agm,m: m ,src_pos:pos}
 	}
 
 	type ApplySysParam=SystemParamWithQueryT<
-		(&'static Change<Momentum<Num,DIM>>, &'static Change<AngularMomentum<Num,DIM>>),
+		(
+			&'static Change<Momentum<Num,DIM>>, 
+			&'static Change<AngularMomentum<Num,DIM>>, 
+			&'static Stat<Pos<Num,DIM>>
+		),
 		(),
 		()
 	>;
@@ -87,7 +98,7 @@ where
 				>
 		) {
 		values.1.0.add_change(self.m);
-		values.1.1.add_change(self.agm);
+		values.1.1.add_change(self.agm + angular_momentum_from_momentum_pos(&(self.src_pos-values.1.2.0), &self.m));
 	}
 }
 

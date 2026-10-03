@@ -1,10 +1,10 @@
 use std::{ops::DerefMut, sync::Arc};
 
-use bevy::{app::App, ecs::{component::Component, entity::{Entity, EntityHash}, query::{QueryItem, ROQueryItem}, schedule::IntoScheduleConfigs, system::{Query, SystemParamItem}}};
+use bevy::{app::App, ecs::{component::Component, entity::{Entity, EntityHash}, query::{QueryItem, ROQueryItem}, schedule::{IntoScheduleConfigs, SystemSet}, system::{Query, SystemParamItem}}};
 use dashmap::DashMap;
 use wacky_bag_bevy::{system::propagate_relationship::{PropagateLeafToRootMut, PropagateLeafToRootMutApplySysParam, PropagateLeafToRootMutFromSysParam, PropagateRootToLeafMut, PropagateRootToLeafMutBeginSysParam, PropagateRootToLeafMutProcessSysParam, propagate_leaf_to_root_mut, propagate_root_to_leaf_mut}, utils::system_param_with_query::{SystemParamWithQuery, SystemParamWithQueryMergeT, SystemParamWithQueryT}};
 
-use crate::{multi_body::attach::AttachTo, schedule::schedule_sim, subsystem::{controller::DynController, dyn_object::DynObject, env::DynEnv}};
+use crate::{multi_body::attach::AttachTo, schedule::schedule_sim, subsystem::dyn_control::{controller::DynController, dyn_object::DynObject, env::DynEnv}};
 
 
 #[derive(Debug)]
@@ -117,11 +117,13 @@ pub fn control_process(mut q:Query<(&mut DynEnv, &mut DynController, Entity)>){
 		c.0.lock().unwrap().process(e.0.lock().unwrap().deref_mut(), me);
 	});
 }
+#[derive(Debug,Default,Hash,PartialEq, Eq, Clone, Copy,SystemSet)]
+pub struct ControlSystems;
 
 pub fn plugin(app:&mut App) {
 	app.add_systems(schedule_sim(), (
 		propagate_leaf_to_root_mut::<PropagateControlLeafToRoot,AttachTo>,
 		control_process,
 		propagate_root_to_leaf_mut::<PropagateControlRootToLeaf,AttachTo>
-	).chain());
+	).chain().in_set(ControlSystems));
 }

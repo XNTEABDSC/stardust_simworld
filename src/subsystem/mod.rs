@@ -1,16 +1,13 @@
 use std::{any::Any, sync::{Arc, Mutex}};
 
+use bevy::ecs::{system::Query, world::{EntityMutExcept, EntityRef}};
 
 
-pub mod controller;
+
 pub mod thrust;
-pub mod control_systems;
-pub mod dyn_object;
-pub mod env;
+pub mod dyn_control;
+pub mod momentum_whell;
+pub mod msg_control;
+pub mod propagate_control;
 
-pub type BA=Box<dyn Any>;
-pub type AMA=Arc<Mutex<dyn Any>>;
-
-pub trait ControlInterface {
-    
-}
+pub type DynAny=Box<dyn Any+Send+Sync>;

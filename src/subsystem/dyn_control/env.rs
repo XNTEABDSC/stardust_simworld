@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use bevy::ecs::component::Component;
 
-use crate::subsystem::dyn_object::DynObject;
+use crate::subsystem::dyn_control::dyn_object::DynObject;
 
 
 #[derive(Debug,Default,Component)]
