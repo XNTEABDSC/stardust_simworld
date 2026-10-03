@@ -11,6 +11,6 @@ use crate::subsystem::DynAny;
 // pub fn put_messages<T>(mr:MessageReader<>)
 
 // #[derive(Bundle)]
-pub type AnyMsgBundle = (MessagesOnEntity<DynAny>,);
+pub type AnyMsgC = MessagesOnEntity<DynAny>;
 
 pub type AnyMsgRes = MessagesOnEntityRes<DynAny>;

@@ -15,6 +15,6 @@ use crate::subsystem::{dyn_control::dyn_object::DynObject, propagate_control::Pr
 // 	fn root_to_leaf_send   (&mut self,env:&mut Option<DynObject>,me:Entity)->Box<dyn FnMut(Entity)->Option<DynObject>>;
 // 	fn root_to_leaf_receive_send(&mut self,env:&mut Option<DynObject>,me:Entity,root_data:(Entity,Option<DynObject>))->Box<dyn FnMut(Entity)->Option<DynObject>>;
 // }
-#[derive(Debug,Component)]
+#[derive(Component)]
 pub struct DynController(pub Arc<Mutex<dyn PropagateControl<Option<DynObject>>+Send+Sync>>);
 
