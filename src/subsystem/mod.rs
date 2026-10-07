@@ -8,6 +8,8 @@ pub mod thrust;
 pub mod dyn_control;
 pub mod momentum_whell;
 pub mod msg_control;
-pub mod propagate_control;
+
+// too complex
+// pub mod propagate_control;
 
 pub type DynAny=Box<dyn Any+Send+Sync>;

@@ -8,12 +8,17 @@ use crate::{multi_body::attach::AttachTo, schedule::schedule_sim};
 /// performs leaf_to_root , process, root_to_leaf control in 1 frame
 /// 
 /// driven by [`plugin`]
-pub trait PropagateControl<DynAny> {
+pub trait PropagateControl<C,DynAny> {
 	fn leaf_to_root_send   (&mut self,entity:EntityMutExcept<()>)->DynAny;
-	fn leaf_to_root_receive(&self,entity:EntityRefExcept<()>,leaf_data:(Entity,DynAny));
-	fn process             (&mut self,entity:EntityMutExcept<()>);
+	fn leaf_to_root_receive(&self,    entity:EntityRefExcept<()>,leaf_data:(Entity,DynAny));
 	fn root_to_leaf_send   (&mut self,entity:EntityMutExcept<()>)->Box<dyn FnMut(Entity)->DynAny>;
 	fn root_to_leaf_receive_send(&mut self,entity:EntityMutExcept<()>,root_data:(Entity,DynAny))->Box<dyn FnMut(Entity)->DynAny>;
+}
+
+pub trait ControlProcess<C,DynAny>
+where C:Component
+{
+	fn process(&mut self,entity:EntityMutExcept<(C,)>);
 }
 
 #[derive(Debug)]
@@ -23,11 +28,13 @@ pub struct PropagateControlLeafToRoot<Controller,DynAny>((Entity,DynAny),Phantom
 pub struct PropagateControlRootToLeaf<Controller,DynAny>((Entity,DynAny),PhantomData<Controller>);
 
 impl<Controller,DynAny:'static> PropagateLeafToRootMut<AttachTo> for PropagateControlLeafToRoot<Controller,DynAny>
-where Controller:PropagateControl<DynAny>+Component<Mutability = Mutable>
+where Controller:PropagateControl<Controller,DynAny>+Component<Mutability = Mutable>
 {
 	type FromSysParam=SystemParamWithQueryT<
 		(
-			EntityMutExcept<'static,'static,()>,
+			EntityMutExcept<'static,'static,(
+				Controller,AttachTo
+			)>,
 			&'static mut Controller,
 			Entity
 		),(),()
