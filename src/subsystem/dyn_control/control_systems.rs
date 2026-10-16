@@ -1,7 +1,6 @@
 use std::{ops::DerefMut, sync::Arc};
 
-use bevy::{app::App, ecs::{component::Component, entity::{Entity, EntityHash}, query::{QueryItem, ROQueryItem}, schedule::{IntoScheduleConfigs, SystemSet}, system::{Query, SystemParamItem}}};
-use dashmap::DashMap;
+use bevy::{app::App, ecs::{component::Component, entity::{Entity, EntityHash}, query::{QueryItem, ROQueryItem}, schedule::{IntoScheduleConfigs, SystemSet}, system::{Query, SystemParamItem}, world::EntityMutExcept}};
 use wacky_bag_bevy::{system::propagate_relationship::{PropagateLeafToRootMut, PropagateLeafToRootMutApplySysParam, PropagateLeafToRootMutFromSysParam, PropagateRootToLeafMut, PropagateRootToLeafMutBeginSysParam, PropagateRootToLeafMutProcessSysParam, propagate_leaf_to_root_mut, propagate_root_to_leaf_mut}, utils::system_param_with_query::{SystemParamWithQuery, SystemParamWithQueryMergeT, SystemParamWithQueryT}};
 
 use crate::{multi_body::attach::AttachTo, schedule::schedule_sim, subsystem::dyn_control::{controller::DynController, dyn_object::DynObject, env::DynEnv}};
@@ -23,7 +22,7 @@ impl PropagateLeafToRootMut<AttachTo> for PropagateControlLeafToRoot {
 	>;
 
 	fn from_data(
-			values: 
+			mut values: 
 				QueryItem<
 					<SystemParamWithQueryMergeT<PropagateLeafToRootMutFromSysParam<AttachTo>, Self::FromSysParam> as SystemParamWithQuery>::D
 				>,
@@ -32,7 +31,7 @@ impl PropagateLeafToRootMut<AttachTo> for PropagateControlLeafToRoot {
 					<SystemParamWithQueryMergeT<PropagateLeafToRootMutFromSysParam<AttachTo>, Self::FromSysParam> as SystemParamWithQuery>::P
 				>
 		)->Self {
-		Self( (values.1.2,values.1.1.0.lock().unwrap().leaf_to_root_send(&mut values.1.0.0.lock().unwrap(),values.1.2)) )
+		Self( (values.1.2,values.1.1.0.leaf_to_root_send(&mut values.1.0,values.1.2)) )
 	}
 
 	type ApplySysParam=SystemParamWithQueryT<
@@ -54,7 +53,7 @@ impl PropagateLeafToRootMut<AttachTo> for PropagateControlLeafToRoot {
 					<SystemParamWithQueryMergeT<PropagateLeafToRootMutApplySysParam<AttachTo>, Self::ApplySysParam> as SystemParamWithQuery>::P
 				>
 		) {
-		values.1.1.0.lock().unwrap().leaf_to_root_receive(values.1.0.0.lock().unwrap().deref_mut(), values.0.2, self.0);
+		values.1.1.0.leaf_to_root_receive(values.1.0, values.0.2, self.0);
 		// values.1.1.0.leaf_receive(&mut values.1.0.0, values.0.2, self.0);
 	}
 }
@@ -69,7 +68,7 @@ impl PropagateRootToLeafMut<AttachTo> for PropagateControlRootToLeaf {
 	>;
 
 	fn process_data_begin(
-			values: 
+			mut values: 
 				QueryItem<
 					<SystemParamWithQueryMergeT<PropagateRootToLeafMutBeginSysParam<AttachTo>, Self::BeginSysParam> as SystemParamWithQuery>::D
 				>,
@@ -81,7 +80,7 @@ impl PropagateRootToLeafMut<AttachTo> for PropagateControlRootToLeaf {
 		// Vec<(Entity,Self)>
 		impl FnMut(Entity)->Self
 		{
-		let mut f=values.1.1.0.lock().unwrap().root_to_leaf_send(values.1.0.0.lock().unwrap().deref_mut(), values.1.2);
+		let mut f=values.1.1.0.root_to_leaf_send(values.1.0.deref_mut(), values.1.2);
 		move|e| Self((values.1.2,f(e)))
 	}
 
@@ -95,7 +94,7 @@ impl PropagateRootToLeafMut<AttachTo> for PropagateControlRootToLeaf {
 
 	fn process_data<'w,'s>(
 			self,
-			values: 
+			mut values: 
 				QueryItem<
 					<SystemParamWithQueryMergeT<PropagateRootToLeafMutProcessSysParam<AttachTo>, Self::ProcessSysParam> as SystemParamWithQuery>::D
 				>,
@@ -107,14 +106,14 @@ impl PropagateRootToLeafMut<AttachTo> for PropagateControlRootToLeaf {
 		// Vec<(Entity,Self)>
 		impl FnMut(Entity)->Self
 		 {
-		let mut f=values.1.1.0.lock().unwrap().root_to_leaf_receive_send(values.1.0.0.lock().unwrap().deref_mut(), values.1.2,self.0);
+		let mut f=values.1.1.0.root_to_leaf_receive_send(values.1.0.deref_mut(), values.1.2,self.0);
 		move|e| Self((values.1.2,f(e)))
 	}
 }
 
-pub fn control_process(mut q:Query<(&mut DynEnv, &mut DynController, Entity)>){
-	q.par_iter_mut().for_each(|(e,c,me)|{
-		c.0.lock().unwrap().process(e.0.lock().unwrap().deref_mut(), me);
+pub fn control_process(mut q:Query<(&mut DynEnv, &mut DynController, Entity, EntityMutExcept<(DynController,DynEnv)>)>){
+	q.par_iter_mut().for_each(|(mut e,mut c,me,em)|{
+		c.0.process(e.deref_mut(), me,em);
 	});
 }
 #[derive(Debug,Default,Hash,PartialEq, Eq, Clone, Copy,SystemSet)]

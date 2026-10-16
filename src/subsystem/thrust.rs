@@ -6,7 +6,7 @@ use nalgebra::{Const, DefaultAllocator, DimName, OVector, RealField, SVector, Sc
 use num_traits::Zero;
 use physics_basic::{rotation::{ConstDimToSoDimT, DimToSoDim, Rotation, RotationMatrix}, stats::{Energy, Mass, Momentum, Pos, TimePass, Vel, mass_vel_2_kinetic, mass_vel_2_momentum}};
 use statistic_physics::matters::MattersBasicStat;
-use wacky_bag_bevy::{stat_component::{change::Change, stat::Stat}, utils::stat_for_hlist::HChangeAdd};
+use wacky_bag_bevy::{component::CAM, stat_component::{change::Change, stat::Stat}, utils::stat_for_hlist::HChangeAdd};
 use wacky_bag::utils::num_extend::NumExtends;
 use wacky_bag_hlist::{h_list_helpers::{FoldApply, HMapP, MapToPhantom}, impl_func_closure, output_map::HMappableFrom, reverse_func::ReverseFunc};
 
@@ -19,6 +19,9 @@ pub struct ThrustDef<Num>{
     max_power:Num,
 }
 
+
+/// Control the thrust
+/// 
 #[derive(Debug,Reflect,Clone, Copy,Component)]
 pub struct ThrustControl<Num>{
     pub power:Num
@@ -70,12 +73,12 @@ where Num:Sync+Send+'static+Copy+RealField
         *c=m.control;
     });
 }
-
-pub fn thrust_control_apply<Num>(mut q:Query<(&mut ThrustDef<Num>,&mut ThrustState<Num>,&ThrustControl<Num>)>)
+pub fn thrust_control_apply<Num>(mut q:Query<(&mut ThrustDef<Num>,&mut ThrustState<Num>,&mut ThrustControl<Num>)>)
 where Num:Sync+Send+'static+Copy+RealField
 {
 	q.par_iter_mut().for_each(|mut c|{
-		*c.1=calc_thrust(&c.0, c.2);
+        
+		*c.1=calc_thrust(&c.0, &c.2);
 	});
 }
 

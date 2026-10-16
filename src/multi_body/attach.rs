@@ -1,5 +1,5 @@
 
-use bevy::ecs::{entity::Entity, relationship::{Relationship, RelationshipTarget}};
+use bevy::ecs::{entity::Entity, name::Name, relationship::{Relationship, RelationshipTarget}};
 use bevy::ecs::component::Component;
 
 
@@ -74,3 +74,5 @@ impl RelationshipTarget for AttachedEntities{
 
 #[derive(Debug,Component,Default,Clone, Copy)]
 pub struct AttachToWith<T>(pub T);
+
+pub type AttachName=AttachToWith<Name>;

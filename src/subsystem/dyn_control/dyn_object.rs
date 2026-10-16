@@ -33,13 +33,13 @@ use crate::subsystem::dyn_control::dyn_object::DynObject::{IMap, IVec, SMap};
 
 
 
-#[derive(Debug,Clone,From)]
+#[derive(Debug,From)]
 pub enum DynObject{
 	Int(i64),
 	Float(f32),
 	Str(String),
-	// Box(Box<dyn Any>),
-	ArcMutex(Arc<Mutex<dyn Any+Send+Sync>>),
+	Box(Box<dyn Any+Send+Sync>),
+	// ArcMutex(Arc<Mutex<dyn Any+Send+Sync>>),
 	// WeakMutex(Weak<Mutex<dyn Any>>),
 	SMap(HashMap<String,DynObject>),
 	IMap(HashMap<i64,DynObject>),
