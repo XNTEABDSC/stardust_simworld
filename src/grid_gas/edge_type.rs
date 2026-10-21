@@ -5,7 +5,7 @@ use nalgebra::RealField;
 use statistic_physics::formulas::GasCellSpreadToSideType;
 use wacky_bag::math::normal_cdf::NormalCdfConsts;
 use wacky_bag_bevy::utils::plugin_add_systems::{plugin_add_systems, plugin_insert_resource};
-
+use bevy::prelude::ReflectResource;
 use crate::{grid_gas::spread::{grid_gas_spread_edge_const, grid_gas_spread_edge_wall}, schedule::schedule_sim};
 
 
@@ -57,6 +57,7 @@ impl<Num,const DIM:usize,Marker> PluginGroup for GridGasEdgeWall<Num,DIM,Marker>
 
 
 #[derive(Resource,Reflect)]
+#[reflect(Resource)]
 pub struct GridGasEdgeConst<Num,const DIM:usize,Marker>
 	where Num:RealField+Copy+NormalCdfConsts<Marker>
 {

@@ -7,11 +7,13 @@ use statistic_physics::matters::MattersBasicStat;
 use wacky_bag::{structures::n_dim_array::t_n_dim_array::TNDimArray};
 use wacky_bag_hlist::h_list_helpers::{HMapP, HToMut, HToRef};
 use wacky_bag_bevy::{system::processing_system::ScheduleConfigsProcessing, utils::stat_for_hlist::{HChangeApplyChange, HChangeGetAndReset, MapTakeStatChange, MapToChange}};
+use bevy::prelude::ReflectComponent;
 
 use crate::{grid::at_grid::AtGridCell, grid_gas::resource::{GridGasDatas, GridGasResource}, schedule::{schedule_apply_change, schedule_pre_sim}};
 
 /// we simply copy [GridGasDatas] from grid to entity when [FixedPreUpdate], and put changes back when [FixedPostUpdate]
 #[derive(Component,Reflect)]
+#[reflect(Component)]
 pub struct AtGridCellGas<Num,const DIM:usize>(pub GridGasDatas<Num,DIM>);
 
 pub fn set_at_grid_gas<Num:RealField+Copy,const DIM:usize>(mut q:Query<(Entity,&AtGridCell<DIM>,Option<&mut AtGridCellGas<Num,DIM>>)>,res:Res<GridGasResource<Num,DIM>>, p_cmd:ParallelCommands ){

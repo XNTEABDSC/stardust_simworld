@@ -5,25 +5,37 @@ edition = "2024"
 
 [dependencies]
 
-bevy = { version = "0.18.1" }
-fixed = "1.29.0"
-cordic = "0.1.5"
-wacky_bag = {path="../../repos/wacky_bag"}
-wacky_bag_hlist = {path="../../repos/wacky_bag_hlist"}
-rand = "0.8.5"
-statistic_physics = {path="../../repos/statistic_physics"}
-physics_basic = {path="../../repos/physics_basic"}
-log = { version = "*", features = ["max_level_debug", "release_max_level_warn"] }
-frunk = "0.5.0"
-# wacky_bag_fixed = {path="../../repos/wacky_bag_fixed"}
-derive_more = {version = "2.0.1",features = ["add","add_assign","not","deref","deref_mut"]}
-wacky_bag_bevy = {path="../../repos/wacky_bag_bevy"}
-nalgebra = "0.34.0"
-# bevy_ecs_macros = "0.18.1"
-num-traits = "0.2.19"
-# ambassador = "0.4.1"
-simba = "0.9.1"
-dashmap = "6.2.1"
+bevy = {workspace=true}
 
-[target.x86_64-pc-windows-msvc]
-linker = "rust-lld.exe"
+frunk = {workspace=true}
+frunk_core = {workspace=true}
+
+rand = {workspace=true}
+derive_more = { workspace=true,features = ["add","add_assign","not","deref","deref_mut"]}
+log = { workspace=true, features = ["max_level_debug", "release_max_level_warn"] }
+dashmap = {workspace=true}
+bimap = {workspace=true}
+
+wacky_bag = {workspace=true}
+wacky_bag_hlist = {workspace=true}
+statistic_physics = {workspace=true}
+physics_basic = {workspace=true}
+
+wacky_bag_bevy = {path="../wacky_bag_bevy"}
+
+simba = {workspace=true}
+num-traits = {workspace=true}
+nalgebra = {workspace=true}
+
+# tracing = "0.1.44"
+
+# Enable a small amount of optimization in the dev profile.
+# [profile.dev]
+# opt-level = 1
+
+# [profile.dev.package.wacky_bag_bevy]
+# opt-level = 1
+
+# # Enable a large amount of optimization in the dev profile for dependencies.
+# [profile.dev.package."*"]
+# opt-level = 3

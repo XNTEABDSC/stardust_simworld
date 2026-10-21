@@ -3,7 +3,7 @@ use std::sync::Arc;
 use bevy::{ecs::resource::Resource, reflect::Reflect};
 use derive_more::Deref;
 use wacky_bag::structures::n_dim_array::{n_dim_chunk_array::NDimChunkArray, n_dim_indexer::NDimIndexer};
-
+use bevy::prelude::ReflectResource;
 
 
 
@@ -14,6 +14,7 @@ pub type GridResource<const DIM:usize,T>=NDimChunkArray<DIM,T>;
 pub struct GridIndexer<const DIM:usize>(pub Arc<NDimIndexer<DIM>>);
 
 #[derive(Resource,Clone,Reflect)]
+#[reflect(Resource)]
 pub struct GridData<Num,const DIM:usize>{
 	// pub ranges:[Range<isize>;DIM],
 	pub ranges:[usize;DIM],

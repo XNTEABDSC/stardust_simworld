@@ -7,7 +7,7 @@ use statistic_physics::{formulas::{self, calculate_matters_state_inplace_m}, mat
 use wacky_bag::{structures::n_dim_array::t_n_dim_array::TNDimArrayForEachParallel};
 use wacky_bag_hlist::{h_list_helpers::HMapP, output_map::HMappableFrom};
 use wacky_bag_bevy::{system::processing_system::ScheduleConfigsProcessing, utils::{stat_for_hlist::{HApplyChange, MapFromStatMut, MapToChange, MapToStat}, thread_scope::ComputeTaskPoolScopeCreater}};
-
+use bevy::prelude::ReflectResource;
 
 use crate::{grid::grid::GridResource, schedule::{schedule_apply_change, schedule_pre_sim}};
 
@@ -33,6 +33,7 @@ pub fn grid_gas_datas<Num,const DIM:usize>(basics:MattersBasic<Num,DIM>)->GridGa
 
 
 #[derive(Resource,Clone,Reflect)]
+#[reflect(Resource)]
 pub struct GridGasResource<Num,const DIM:usize>(pub GridResource<DIM,GridGasDatas<Num,DIM>>);
 
 pub fn grid_gas_apply_changes<Num:RealField+Copy,const DIM:usize>(mut grid_gas:ResMut<GridGasResource<Num,DIM>>){

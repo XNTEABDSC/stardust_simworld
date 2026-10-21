@@ -1,57 +1,28 @@
-use std::{any::Any, collections::{BTreeMap, HashMap}, fmt::Display, mem, ops::{Deref, Index}, sync::{Arc, Mutex}};
+use std::collections::HashMap;
 
-use bevy::ecs::component::Component;
 use derive_more::From;
 
-use crate::subsystem::dyn_control::dyn_object::DynObject::{IMap, IVec, SMap};
-
-// #[derive(Debug,Clone)]
-// pub enum DynBasic {
-// 	Int(i64),
-// 	Float(f32),
-// 	Str(String),
-// }
-
-// impl Display for DynObject {
-// 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-// 		match self {
-// 			DynObject::Int(a) => a.fmt(f),
-// 			DynObject::Float(a) => a.fmt(f),
-// 			DynObject::Str(a) => a.fmt(f),
-
-// 		}
-// 	}
-// }
-
-// #[derive(Debug,Clone)]
-// pub enum DynMap {
-// 	StrMap(HashMap<String,DynObject>),
-// 	IntMap(HashMap<i64,DynObject>),
-// 	FMap(BTreeMap<f32,DynObject>),
-// 	Vec(Vec<DynObject>),
-// }
-
+use crate::subsystem::pipe::limited_dyn_object::LDynObject::{IMap, IVec, SMap};
 
 
 #[derive(Debug,From)]
-pub enum DynObject{
+pub enum LDynObject{
 	Int(i64),
 	Float(f32),
 	Str(String),
-	Box(Box<dyn Any+Send+Sync>),
 	// ArcMutex(Arc<Mutex<dyn Any+Send+Sync>>),
 	// WeakMutex(Weak<Mutex<dyn Any>>),
-	SMap(HashMap<String,DynObject>),
-	IMap(HashMap<i64,DynObject>),
-	IVec(Vec<DynObject>)
+	SMap(HashMap<String,LDynObject>),
+	IMap(HashMap<i64,LDynObject>),
+	IVec(Vec<LDynObject>)
 }
 
-impl DynObject {
-	pub fn table_get(&self,i:&DynObject)->Option<&DynObject> {
+impl LDynObject {
+	pub fn table_get(&self,i:&LDynObject)->Option<&LDynObject> {
 		match self {
 			SMap(m)=>{
 				match i {
-					DynObject::Str (s)=>{
+					LDynObject::Str (s)=>{
 						m.get(s)
 					},
 					_=>None
@@ -59,7 +30,7 @@ impl DynObject {
 			},
 			IMap(m)=>{
 				match i {
-					DynObject::Int (s)=>{
+					LDynObject::Int (s)=>{
 						m.get(s)
 					},
 					_=>None
@@ -67,7 +38,7 @@ impl DynObject {
 			},
 			IVec(v)=>{
 				match i {
-					DynObject::Int (s)=>{
+					LDynObject::Int (s)=>{
 						v.get(*s as usize)
 					},
 					_=>None
@@ -77,11 +48,11 @@ impl DynObject {
 		}
 	}
 
-	pub fn table_get_mut(&mut self,i:&DynObject)->Option<&mut DynObject> {
+	pub fn table_get_mut(&mut self,i:&LDynObject)->Option<&mut LDynObject> {
 		match self {
 			SMap(m)=>{
 				match i {
-					DynObject::Str (s)=>{
+					LDynObject::Str (s)=>{
 						m.get_mut(s)
 					},
 					_=>None
@@ -89,7 +60,7 @@ impl DynObject {
 			},
 			IMap(m)=>{
 				match i {
-					DynObject::Int (s)=>{
+					LDynObject::Int (s)=>{
 						m.get_mut(s)
 					},
 					_=>None
@@ -97,7 +68,7 @@ impl DynObject {
 			},
 			IVec(v)=>{
 				match i {
-					DynObject::Int (s)=>{
+					LDynObject::Int (s)=>{
 						v.get_mut(*s as usize)
 					},
 					_=>None
@@ -107,11 +78,11 @@ impl DynObject {
 		}
 	}
 
-	pub fn table_insert(&mut self,k:DynObject,v:DynObject)->Option<DynObject>{
+	pub fn table_insert(&mut self,k:LDynObject,v:LDynObject)->Option<LDynObject>{
 		match self {
 			SMap(m)=>{
 				match k {
-					DynObject::Str (k)=>{
+					LDynObject::Str (k)=>{
 						m.insert(k,v)
 					},
 					_=>None
@@ -119,7 +90,7 @@ impl DynObject {
 			},
 			IMap(m)=>{
 				match k {
-					DynObject::Int (k)=>{
+					LDynObject::Int (k)=>{
 						m.insert(k,v)
 					},
 					_=>None
@@ -127,7 +98,7 @@ impl DynObject {
 			},
 			IVec(m)=>{
 				match k {
-					DynObject::Int (k)=>{
+					LDynObject::Int (k)=>{
 						m.insert(k as usize, v);
 						None
 					},
@@ -138,11 +109,11 @@ impl DynObject {
 		}
 	}
 
-	pub fn table_remove(&mut self,k:&DynObject)->Option<DynObject>{
+	pub fn table_remove(&mut self,k:&LDynObject)->Option<LDynObject>{
 		match self {
 			SMap(m)=>{
 				match k {
-					DynObject::Str (k)=>{
+					LDynObject::Str (k)=>{
 						m.remove(k)
 					},
 					_=>None
@@ -150,7 +121,7 @@ impl DynObject {
 			},
 			IMap(m)=>{
 				match k {
-					DynObject::Int (k)=>{
+					LDynObject::Int (k)=>{
 						m.remove(k)
 					},
 					_=>None
@@ -158,7 +129,7 @@ impl DynObject {
 			},
 			IVec(m)=>{
 				match k {
-					DynObject::Int (k)=>{
+					LDynObject::Int (k)=>{
 						m.remove(*k as usize);
 						None
 					},
@@ -189,13 +160,13 @@ impl DynObject {
 }
 
 pub enum Iter<'a> {
-	SMap(<&'a HashMap<String,DynObject> as IntoIterator>::IntoIter),
-	IMap(<&'a HashMap<i64,DynObject> as IntoIterator>::IntoIter),
-	IVec(std::iter::Enumerate< <&'a Vec<DynObject> as IntoIterator>::IntoIter >),
+	SMap(<&'a HashMap<String,LDynObject> as IntoIterator>::IntoIter),
+	IMap(<&'a HashMap<i64,LDynObject> as IntoIterator>::IntoIter),
+	IVec(std::iter::Enumerate< <&'a Vec<LDynObject> as IntoIterator>::IntoIter >),
 }
 
 impl<'a> Iterator for Iter<'a> {
-	type Item=(DynObject,&'a DynObject);
+	type Item=(LDynObject,&'a LDynObject);
 
 	fn next(&mut self) -> Option<Self::Item> {
 		match self {
@@ -207,13 +178,13 @@ impl<'a> Iterator for Iter<'a> {
 }
 
 pub enum IterMut<'a> {
-	SMap(<&'a mut HashMap<String,DynObject> as IntoIterator>::IntoIter),
-	IMap(<&'a mut HashMap<i64,DynObject> as IntoIterator>::IntoIter),
-	IVec(std::iter::Enumerate< <&'a mut Vec<DynObject> as IntoIterator>::IntoIter >),
+	SMap(<&'a mut HashMap<String,LDynObject> as IntoIterator>::IntoIter),
+	IMap(<&'a mut HashMap<i64,LDynObject> as IntoIterator>::IntoIter),
+	IVec(std::iter::Enumerate< <&'a mut Vec<LDynObject> as IntoIterator>::IntoIter >),
 }
 
 impl<'a> Iterator for IterMut<'a> {
-	type Item=(DynObject,&'a mut DynObject);
+	type Item=(LDynObject,&'a mut LDynObject);
 
 	fn next(&mut self) -> Option<Self::Item> {
 		match self {

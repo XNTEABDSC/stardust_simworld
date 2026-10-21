@@ -5,10 +5,12 @@ use nalgebra::RealField;
 use physics_basic::stats::Pos;
 use wacky_bag::structures::n_dim_array::n_dim_index::NDimIndex;
 use wacky_bag_bevy::{stat_component::stat::Stat, system::processing_system::ScheduleConfigsProcessing};
+use bevy::prelude::ReflectComponent;
 
 use crate::{grid::grid::GridData, schedule::schedule_pre_sim};
 
 #[derive(Component,Reflect)]
+#[reflect(Component)]
 pub struct AtGridCell<const DIM:usize>(pub NDimIndex<DIM>);
 
 pub fn entity_at_grid<Num:RealField+Copy,const DIM:usize>(mut q:Query<(&Stat<Pos<Num,DIM>>,&mut AtGridCell<DIM>)>,grid_data:Res<GridData<Num,DIM>>) {

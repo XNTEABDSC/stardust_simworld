@@ -5,11 +5,12 @@ use bevy::ecs::{system::Query, world::{EntityMutExcept, EntityRef}};
 
 
 pub mod thrust;
-pub mod dyn_control;
+// pub mod dyn_control;
 pub mod momentum_whell;
 pub mod msg_control;
 pub mod register_subsystems;
-pub mod interface;
+pub mod pipe;
+pub mod dyn_object;
 
 // too complex
 // pub mod propagate_control;

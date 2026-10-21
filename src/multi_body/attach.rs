@@ -1,18 +1,19 @@
 
 use bevy::ecs::{entity::Entity, name::Name, relationship::{Relationship, RelationshipTarget}};
 use bevy::ecs::component::Component;
+use wacky_bag_hlist::new_new_type_func;
 
 
 #[derive(Debug,Component)]
+#[relationship(relationship_target=AttachedEntities)]
 pub struct AttachTo{
 	target:Entity,
 	// pub(super) level:Option<usize>,
 }
 
 #[derive(Debug,Component)]
-pub struct AttachedEntities{
-	attached_entities:Vec<Entity>,
-}
+#[relationship_target(relationship=AttachTo)]
+pub struct AttachedEntities(Vec<Entity>);
 
 impl AttachTo {
 	pub fn from_entity(entity: Entity)->Self{
@@ -26,53 +27,55 @@ impl AttachTo {
 	// }
 }
 
-impl Relationship for AttachTo
-{
-	type RelationshipTarget=AttachedEntities;
+// impl Relationship for AttachTo
+// {
+// 	type RelationshipTarget=AttachedEntities;
 
-	fn get(&self) -> Entity {
-		self.target
-	}
+// 	fn get(&self) -> Entity {
+// 		self.target
+// 	}
 
-	fn from(entity: Entity) -> Self {
-		AttachTo::from_entity(entity)
-	}
+// 	fn from(entity: Entity) -> Self {
+// 		AttachTo::from_entity(entity)
+// 	}
 
-	fn set_risky(&mut self, entity: Entity) {
-		self.target=entity;
-	}
+// 	fn set_risky(&mut self, entity: Entity) {
+// 		self.target=entity;
+// 	}
 
-	// fn on_insert(
-	// 	mut world: DeferredWorld,
-	// 	hook_context: HookContext,
-	// )
-	// {
-	// 	Relationship::on_insert(world, hook_context);
-	// }
-}
+// 	// fn on_insert(
+// 	// 	mut world: DeferredWorld,
+// 	// 	hook_context: HookContext,
+// 	// )
+// 	// {
+// 	// 	Relationship::on_insert(world, hook_context);
+// 	// }
+// }
 
-impl RelationshipTarget for AttachedEntities{
-	const LINKED_SPAWN: bool=true;
+// impl RelationshipTarget for AttachedEntities{
+// 	const LINKED_SPAWN: bool=true;
 
-	type Relationship=AttachTo;
+// 	type Relationship=AttachTo;
 
-	type Collection=Vec<Entity>;
+// 	type Collection=Vec<Entity>;
 
-	fn collection(&self) -> &Self::Collection {
-		&self.attached_entities
-	}
+// 	fn collection(&self) -> &Self::Collection {
+// 		&self.attached_entities
+// 	}
 
-	fn collection_mut_risky(&mut self) -> &mut Self::Collection {
-		&mut self.attached_entities
-	}
+// 	fn collection_mut_risky(&mut self) -> &mut Self::Collection {
+// 		&mut self.attached_entities
+// 	}
 
-	fn from_collection_risky(collection: Self::Collection) -> Self {
-		AttachedEntities{attached_entities:collection}
-	}
-}
+// 	fn from_collection_risky(collection: Self::Collection) -> Self {
+// 		AttachedEntities{attached_entities:collection}
+// 	}
+// }
 
 
 #[derive(Debug,Component,Default,Clone, Copy)]
 pub struct AttachToWith<T>(pub T);
+
+new_new_type_func!(AttachToWith pub MapAttachToWith);
 
 pub type AttachName=AttachToWith<Name>;

@@ -10,25 +10,6 @@ use wacky_bag_bevy::{stat_component::{change::Change, stat::Stat}, system::{proc
 
 use crate::{multi_body::{attach::AttachTo, propagate_position::AttachToPos}, physics::bundle::PhyBodyStatisticBundleDetermining, schedule::schedule_apply_change};
 
-// pub fn change_propagate_leaf_to_root<T>(
-// 	ps:ParamSet<(
-// 		Query<(&Change<T>,&AttachTo),Without<AttachedEntities>>,
-// 		Query<(&Change<T>,&AttachedEntities,Option<&AttachTo>)>,
-// 	)>,
-// 	update_sources_set:
-// 	Local<DashMap<Entity,usize,EntityHash>>,
-// 	//Local<Parallel<EntityHashSet>>, 
-// 	//EntityHash 
-// 	//DashSet<Entity,EntityHash>>,
-// 	// mut update_sources:Local<Parallel<Vec<Entity>>>,
-// 	update_tasks:Local<(Parallel<Vec<(Entity,PropagateChangeLeafToRoot<T>)>>,Parallel<Vec<(Entity,PropagateChangeLeafToRoot<T>)>>)>,
-// 	// mut update_tasks_cache:Local<Parallel<Vec<(Entity,T)>>>,
-// )
-// 	where T:Send+Sync+AddAssign+'static+Zero
-// {
-// 	propagate_leaf_to_root::<PropagateChangeLeafToRoot<T>,AttachTo>(ps, update_sources_set, update_tasks);
-// }
-
 pub struct PropagateMomentum<Num,const DIM:usize>
 where 
 	Num:RealField+Copy,
@@ -97,8 +78,8 @@ where
 					<SystemParamWithQueryMergeT<PropagateLeafToRootApplySysParam<R>, Self::ApplySysParam> as SystemParamWithQuery>::P
 				>
 		) {
-		values.1.0.add_change(self.m);
 		values.1.1.add_change(self.agm + angular_momentum_from_momentum_pos(&(self.src_pos-values.1.2.0), &self.m));
+		values.1.0.add_change(self.m);
 	}
 }
 
@@ -117,7 +98,17 @@ where
 	>()
 }
 
-pub fn all_change_propagate_leaf_to_root_system_cfg<T>()->ScheduleConfigs<ScheduleSystem>
+pub fn plugin<Num,const DIM:usize>(app:&mut App)
+where 
+	Num:RealField+Copy,
+	Const<DIM>: DimToSoDim + DimName + DimSquare,
+	DefaultAllocator: 
+		AllocatorSyncVMSq<ConstDimToSoDimT<DIM>,Num>,
+{
+	app.add_systems(schedule_apply_change(), momentum_change_propagate_leaf_to_root_system_cfg::<Num,DIM>());
+}
+
+pub fn change_propagate_leaf_to_root_system_cfg<T>()->ScheduleConfigs<ScheduleSystem>
 where T:Send+Sync+AddAssign+'static+Zero
 {
 	propagate_leaf_to_root::<PropagateChangeLeafToRoot<T>,AttachTo>.into_configs()
@@ -143,7 +134,7 @@ where
 	let cfgsh=dwa.map(Poly(
 		impl_func_closure!(<T>{where T:Send+Sync+AddAssign+'static+Zero}:(PhantomData<T>)->(ScheduleConfigs<ScheduleSystem>)
 			|_a|{
-				all_change_propagate_leaf_to_root_system_cfg::<T>()
+				change_propagate_leaf_to_root_system_cfg::<T>()
 			}
 		)
 	));

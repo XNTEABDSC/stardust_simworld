@@ -6,7 +6,9 @@ use physics_basic::{rotation::{AngularVel, RotationMatrix}, stats::TimePass};
 use physics_basic::stats::{Pos,Vel};
 use simba::scalar::SupersetOf;
 use wacky_bag_bevy::stat_component::stat::Stat;
+use bevy::prelude::ReflectResource;
 #[derive(Resource,Debug,Clone, Copy,Reflect)]
+#[reflect(Resource)]
 pub struct WldLengthToScreenLength{
 	pub wld_len_2_screen_len:f32,
 	pub screen_len_2_wld_len:f32
