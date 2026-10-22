@@ -4,8 +4,8 @@ pub mod systems;
 use std::marker::PhantomData;
 
 use bevy::app::{PluginGroup, PluginGroupBuilder};
-use nalgebra::{Const, DefaultAllocator, DimMin, DimName, RealField, allocator::Allocator};
-use physics_basic::rotation::{ConstDimToSoDimT, DimSquare, DimSquareSo, DimToSoDimT};
+use nalgebra::{Const, DefaultAllocator, RealField, allocator::Allocator};
+use physics_basic::rotation::{ConstDimToSoDimT, DimSquare, DimSquareSo};
 
 
 use crate::physics::systems::CalculateSystemsPlugins;

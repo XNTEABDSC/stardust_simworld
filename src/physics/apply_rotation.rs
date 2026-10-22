@@ -1,6 +1,6 @@
 use bevy::{app::App, ecs::system::Query};
-use nalgebra::{Const, DefaultAllocator, DimMin, RealField, allocator::Allocator};
-use physics_basic::{rotation::{AngularVel, ConstDimToSoDimT, DimSquare, DimToSoDim, Rotation}, stats::TimePass};
+use nalgebra::{Const, DefaultAllocator, RealField, allocator::Allocator};
+use physics_basic::{rotation::{AngularVel, ConstDimToSoDimT, DimToSoDim, Rotation}, stats::TimePass};
 use wacky_bag_bevy::stat_component::{change::Change, stat::Stat};
 
 use crate::schedule::schedule_sim;

@@ -1,9 +1,8 @@
 use bevy::{app::App, ecs::{entity::Entity, query::QueryItem, schedule::{IntoScheduleConfigs, ScheduleConfigs}, system::{ScheduleSystem, SystemParamItem}}};
-use bevy::ecs::component::Component;
 use frunk::HList;
 use nalgebra::{Const, DefaultAllocator, RealField, allocator::Allocator};
 use physics_basic::{rotation::{AngularVel, ConstDimToSoDimT, DimSquare, DimToSoDim, Rotation, RotationMatrix, so_vec_to_mat}, stats::{Pos, Vel}};
-use wacky_bag_bevy::{stat_component::{cache_set::{CacheSet, set_cache_set_system_cfg}, stat::Stat}, system::{processing_system::ScheduleConfigsProcessing, propagate_relationship::{PropagateRootToLeafMut, PropagateRootToLeafMutBeginSysParam, PropagateRootToLeafMutProcessSysParam, propagate_root_to_leaf, propagate_root_to_leaf_mut}}, utils::system_param_with_query::{SystemParamWithQuery, SystemParamWithQueryMerge, SystemParamWithQueryT}};
+use wacky_bag_bevy::{stat_component::{cache_set::{CacheSet, set_cache_set_system_cfg}, stat::Stat}, system::{processing_system::ScheduleConfigsProcessing, propagate_relationship::{PropagateRootToLeafMut, PropagateRootToLeafMutBeginSysParam, PropagateRootToLeafMutProcessSysParam, propagate_root_to_leaf_mut}}, utils::system_param_with_query::{SystemParamWithQuery, SystemParamWithQueryMerge, SystemParamWithQueryT}};
 
 use crate::{multi_body::attach::{AttachTo, AttachToWith}, schedule::schedule_apply_change};
 

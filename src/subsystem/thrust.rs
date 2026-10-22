@@ -1,14 +1,14 @@
 use std::{marker::PhantomData, ops::AddAssign};
 
 use bevy::{app::App, ecs::{bundle::Bundle, component::Component, entity::Entity, message::{Message, MessageReader}, schedule::IntoScheduleConfigs, system::Query}, log::error, reflect::Reflect, utils::default};
-use frunk::{Func, Poly, hlist};
-use nalgebra::{Const, DefaultAllocator, DimName, OVector, RealField, SVector, Scalar, Vector3, allocator::Allocator};
+use frunk::{Poly, hlist};
+use nalgebra::{Const, DimName, OVector, RealField};
 use num_traits::Zero;
-use physics_basic::{rotation::{ConstDimToSoDimT, DimToSoDim, Rotation, RotationMatrix}, stats::{Energy, Mass, Momentum, Pos, TimePass, Vel, mass_vel_2_kinetic, mass_vel_2_momentum}};
+use physics_basic::{rotation::{DimToSoDim, RotationMatrix}, stats::{Energy, Mass, Momentum, TimePass, Vel, mass_vel_2_kinetic, mass_vel_2_momentum}};
 use statistic_physics::matters::MattersBasicStat;
-use wacky_bag_bevy::{component::CAM, stat_component::{change::Change, stat::Stat}, utils::stat_for_hlist::HChangeAdd};
+use wacky_bag_bevy::{stat_component::{change::Change, stat::Stat}, utils::stat_for_hlist::HChangeAdd};
 use wacky_bag::utils::num_extend::NumExtends;
-use wacky_bag_hlist::{h_list_helpers::{FoldApply, HMapP, MapToPhantom}, impl_func_closure, output_map::HMappableFrom, reverse_func::ReverseFunc};
+use wacky_bag_hlist::{h_list_helpers::{HMapP, MapToPhantom}, impl_func_closure} ;
 use bevy::prelude::ReflectComponent;
 use crate::{grid_gas::at_grid_gas::AtGridCellGas, schedule::schedule_sim};
 

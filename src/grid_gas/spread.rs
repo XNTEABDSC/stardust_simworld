@@ -9,7 +9,6 @@ use wacky_bag::utils::num_extend::NumExtends;
 use wacky_bag::{structures::n_dim_array::{dim_dir::DimDir, t_n_dim_array::{TNDimArrayForEachEdgeParallel, TNDimArrayIterPairParallel}}};
 
 use wacky_bag_hlist::select_zip::{h_sculpt_select_zip, h_select_zip};
-use wacky_bag_hlist::type_fn::TypeFnAsPhantomFn;
 use wacky_bag_hlist::{h_list_helpers::MapNeg, output_map::HMappableFrom};
 use wacky_bag_bevy::utils::{stat_for_hlist::{HAddChange, HChangeTransfer, MapFromStatRef, Select2ChangeRef, SelectChangeRef}, thread_scope::ComputeTaskPoolScopeCreater};
 

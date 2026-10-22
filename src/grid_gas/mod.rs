@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use bevy::app::{App, PluginGroup, PluginGroupBuilder};
-use nalgebra::{Const, DefaultAllocator, DimName, RealField, allocator::Allocator};
+use nalgebra::{Const, DefaultAllocator, DimName, RealField};
 
 use physics_basic::rotation::{AllocatorSyncVMSq, ConstDimToSoDimT, DimToSoDim};
 use wacky_bag::math::normal_cdf::NormalCdfConsts;

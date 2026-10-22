@@ -1,10 +1,9 @@
 use bevy::ecs::system::{Query, Res};
 use frunk::Poly;
-use log::info;
-use nalgebra::{Const, DefaultAllocator, DimName, RealField, allocator::Allocator};
-use physics_basic::rotation::{AllocatorSyncVMSq, ConstDimToSoDimT, DimSquare, DimToSoDim};
+use nalgebra::{Const, DefaultAllocator, DimName, RealField};
+use physics_basic::rotation::{AllocatorSyncVMSq, ConstDimToSoDimT, DimToSoDim};
 use statistic_physics::formulas::{InteractGasCellBodyBodyChange, InteractGasCellBodyBodyMatters, interact_gas_cell_body_simple};
-use wacky_bag_hlist::{chain_fn::ChainFunc, h_list_helpers::{HMapP, HToRef, MapRef, Sum}, output_map::HMappableFrom, variadics_tuple::{ToVariadicsTuple, VariadicsTupleToHlist}};
+use wacky_bag_hlist::{h_list_helpers::{HMapP, HToRef, Sum}, output_map::HMappableFrom, variadics_tuple::{ToVariadicsTuple, VariadicsTupleToHlist}};
 use wacky_bag_bevy::utils::{stat_for_hlist::{HChangeAdd, MapFromStatRef, MapToChange, MapToStat}};
 
 use crate::{grid_gas::at_grid_gas::AtGridCellGas, simulate_speed::simulate_speed::SimulateSpeed};

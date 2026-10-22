@@ -2,13 +2,13 @@ use std::{marker::PhantomData, ops::AddAssign} ;
 
 use bevy::{app::App, ecs::{query::ROQueryItem, relationship::Relationship, schedule::{IntoScheduleConfigs, ScheduleConfigs}, system::{ScheduleSystem, SystemParamItem}}, utils::default} ;
 use frunk::{HList, Poly};
-use nalgebra::{Const, DefaultAllocator, DimMin, DimName, RealField, allocator::Allocator};
+use nalgebra::{Const, DefaultAllocator, DimName, RealField};
 use num_traits::Zero;
-use physics_basic::{ rotation::{AllocatorSyncVMSq, AllocatorVM, AngularMomentum, ConstDimToSoDimT, DimSquare, DimToSoDim, angular_momentum_from_momentum_pos}, stat_to_change_type::{HMapStatToChangeTypeZ, MapStatToChangeTypeZ}, stats::{Momentum, Pos}};
+use physics_basic::{ rotation::{AllocatorSyncVMSq, AngularMomentum, ConstDimToSoDimT, DimSquare, DimToSoDim, angular_momentum_from_momentum_pos}, stat_to_change_type::HMapStatToChangeTypeZ, stats::{Momentum, Pos}};
 use wacky_bag_hlist::{impl_func_closure, h_list_helpers::{HMapP, MapToPhantom}};
 use wacky_bag_bevy::{stat_component::{change::Change, stat::Stat}, system::{processing_system::ScheduleConfigsProcessing, propagate_relationship::{PropagateChangeLeafToRoot, PropagateLeafToRoot, PropagateLeafToRootApplySysParam, PropagateLeafToRootFromSysParam, propagate_leaf_to_root}}, utils::system_param_with_query::{SystemParamWithQuery, SystemParamWithQueryMergeT, SystemParamWithQueryT}};
 
-use crate::{multi_body::{attach::AttachTo, propagate_position::AttachToPos}, physics::bundle::PhyBodyStatisticBundleDetermining, schedule::schedule_apply_change};
+use crate::{multi_body::attach::AttachTo, physics::bundle::PhyBodyStatisticBundleDetermining, schedule::schedule_apply_change};
 
 pub struct PropagateMomentum<Num,const DIM:usize>
 where 

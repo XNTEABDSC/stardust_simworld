@@ -1,6 +1,6 @@
-use std::{collections::HashMap, hash::Hash, mem, ops::{Deref, DerefMut}, sync::{Arc, Mutex}};
+use std::{collections::HashMap, hash::Hash, mem, sync::{Arc, Mutex}};
 
-use bevy::{app::App, ecs::{bundle::Bundle, entity::Entity, query::{QueryItem, ROQueryItem}, schedule::{IntoScheduleConfigs, ScheduleConfigs, SystemSet}, system::{ScheduleSystem, SystemParamItem}}, log::error, reflect::ty};
+use bevy::{app::App, ecs::{bundle::Bundle, entity::Entity, query::{QueryItem, ROQueryItem}, schedule::{IntoScheduleConfigs, ScheduleConfigs, SystemSet}, system::{ScheduleSystem, SystemParamItem}}, log::error};
 use wacky_bag_bevy::{component::{CAM, Comp}, system::propagate_relationship::{PropagateLeafToRootMut, PropagateLeafToRootMutApplySysParam, PropagateLeafToRootMutFromSysParam, PropagateRootToLeafMut, PropagateRootToLeafMutBeginSysParam, PropagateRootToLeafMutProcessSysParam, propagate_leaf_to_root_mut, propagate_root_to_leaf_mut}, utils::system_param_with_query::{SystemParamWithQuery, SystemParamWithQueryMergeT, SystemParamWithQueryT}};
 
 use crate::{multi_body::attach::{AttachName, AttachTo}, schedule::schedule_sim, subsystem::{dyn_object::DynObject, pipe::dyn_key::DynKey as Key}};
@@ -434,7 +434,7 @@ where C:MapLike<Key = usize>+Send+Sync+'static
                 QueryItem<
                     <SystemParamWithQueryMergeT<PropagateRootToLeafMutProcessSysParam<AttachTo>, Self::ProcessSysParam> as SystemParamWithQuery>::D
                 >,
-            others: 
+            _others: 
                 &SystemParamItem<
                     <SystemParamWithQueryMergeT<PropagateRootToLeafMutProcessSysParam<AttachTo>, Self::ProcessSysParam> as SystemParamWithQuery>::P
                 >)

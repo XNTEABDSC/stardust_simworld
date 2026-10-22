@@ -1,7 +1,7 @@
-use bevy::{ecs::entity::Entity, log::error} ;
+use bevy::log::error;
 use frunk::HList;
 use nalgebra::{Const, DefaultAllocator, DimMin, DimName, RealField, allocator::Allocator};
-use physics_basic::rotation::{AngularInertia, AngularVel, ConstDimToSoDimT, DimSquare, DimToSoDim, Rotation, so_mat_to_vec, so_vec_to_mat};
+use physics_basic::rotation::{AngularInertia, AngularVel, ConstDimToSoDimT, DimSquare, DimToSoDim, Rotation, };
 use wacky_bag_bevy::stat_component::{change::Change, stat::Stat};
 use wacky_bag_hlist::h_list_helpers::HToRef;
 

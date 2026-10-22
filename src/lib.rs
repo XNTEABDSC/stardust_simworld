@@ -17,8 +17,3 @@ pub mod physics;
 pub mod multi_body;
 pub mod subsystem;
 pub mod body_joint;
-
-
-fn dwa(){
-	
-}

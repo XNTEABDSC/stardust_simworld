@@ -1,9 +1,7 @@
-use std::{any::Any, fmt::Debug};
 
-use bevy::ecs::{bundle::Bundle, component::{Component, Mutable}, entity::Entity, system::Query, world::{EntityMutExcept, EntityRef}};
+use bevy::ecs::{bundle::Bundle, component::{Component, Mutable}, system::Query, world::EntityMutExcept};
 use wacky_bag_bevy::message::message_on_entity::MessagesOnEntity;
 
-use crate::subsystem::DynAny;
 
 // pub trait ControllerMut{
 // 	fn process_mut(&mut self, entity:EntityMutExcept<()>, data:DynAny);
@@ -47,11 +45,12 @@ where MsgCtrl:MessageController<MsgCtrl,DynAny>+Component<Mutability = Mutable>,
 
 #[cfg(test)]
 mod test{
+	use crate::subsystem::DynAny;
 	use bevy::{prelude::*, tasks::{ComputeTaskPool, TaskPool}};
 	// use wacky_bag_bevy::{component::Comp, stat_component::stat::Stat};
 	use super::*;
 
-	use wacky_bag_bevy::{message::{message_on_entity::{MessageOnEntity, MessagesOnEntity, MessagesOnEntityRes, MessagesOnEntityWriter}, owned_message::{ParOwnedMessageWriter, apply_owned_message_parallel}}, utils::query_debug::query_debug};
+	use wacky_bag_bevy::{message::{message_on_entity::{MessageOnEntity, MessagesOnEntity, MessagesOnEntityRes, MessagesOnEntityWriter}, owned_message::apply_owned_message_parallel}, utils::query_debug::query_debug};
 	#[derive(Debug,Default,Component)]
 	struct Strings{
 		pub strs:Vec<String>
@@ -123,7 +122,7 @@ mod test{
 			ms.write(MessageOnEntity { entity: recv_id, msg: Box::new(String::from("wld write 2")) });
 		});
 
-		let sender=world.spawn((
+		let _sender=world.spawn((
 			Name::new("send 1"),
 			GenStringAndSend{
 				recv_entity:recv_id,
